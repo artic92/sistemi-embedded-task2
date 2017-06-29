@@ -38,17 +38,19 @@ entity compute_max is
     Port ( clock : in  STD_LOGIC;
            reset_n : in  STD_LOGIC;
            sample_abs : in  STD_LOGIC_VECTOR (sample_width-1 downto 0);
+           complesso_in : in STD_LOGIC_VECTOR( sample_width-1 downto 0);
            campione : out STD_LOGIC_VECTOR(31 downto 0);
            doppler : out STD_LOGIC_VECTOR(31 downto 0);
            satellite : out STD_LOGIC_VECTOR(31 downto 0);
            max : out  STD_LOGIC_VECTOR (sample_width-1 downto 0);
+           complesso_out : out STD_LOGIC_VECTOR(sample_width-1 downto 0);
            done : out STD_LOGIC);
 end compute_max;
 
 architecture Behavioral of compute_max is
 
 signal cont_campioni, cont_doppler, cont_satelliti : std_logic_vector(31 downto 0) := (others => '0');
-signal max_satellite : std_logic_vector(sample_width-1 downto 0);
+signal max_satellite, complesso_sig : std_logic_vector(sample_width-1 downto 0);
 signal pos_campione, pos_doppler, pos_satellite : std_logic_vector(31 downto 0);
 
 begin
@@ -100,14 +102,15 @@ begin
     end if;
 end process;
 
-compute_max : process(clock, reset_n, sample_abs, cont_campioni, cont_doppler, cont_satelliti, pos_campione, pos_doppler, pos_satellite, max_satellite)
+compute_max : process(clock, reset_n, sample_abs, cont_campioni, cont_doppler, cont_satelliti, pos_campione, pos_doppler, pos_satellite, max_satellite, complesso_in)
 begin
 
   if(reset_n = '0') then
 
-    campione <= (others => '0');
-	  doppler <= (others => '0');
-	  satellite <= (others => '0');
+    pos_campione <= (others => '0');
+    pos_doppler <= (others => '0');
+    pos_satellite <= (others => '0');
+    complesso_sig <= (others => '0');
     max_satellite <= (others => '0');
 
     elsif (rising_edge(clock)) then
@@ -117,6 +120,7 @@ begin
 
         -- Se il sample_abs è maggiore di max_satellite allora quest'ulitmo viene aggiornato
         max_satellite <= sample_abs;
+        complesso_sig <= complesso_in;
 
         -- Se il campione NON è il primo di un intervallo di frequenze doppler
         -- e se il campione è INTERNO oppure è il primo campione in assoluto
@@ -153,6 +157,7 @@ begin
     campione <= pos_campione;
     doppler <= pos_doppler;
     satellite <= pos_satellite;
+    complesso_out <= complesso_sig;
 
     max <= max_satellite;
 end process;
