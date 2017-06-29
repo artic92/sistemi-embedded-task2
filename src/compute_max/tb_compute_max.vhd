@@ -129,7 +129,7 @@ BEGIN
 		sample_abs <= x"00000001";
 		wait for clock_period;
 
-		sample_abs <= x"00000003";
+		sample_abs <= x"0000001E";
 		wait for clock_period;
 
 		sample_abs <= x"0000000b";
