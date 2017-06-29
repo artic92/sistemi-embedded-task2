@@ -113,7 +113,7 @@ BEGIN
 
       -- insert stimulus here
 		wait for 5 ns;
-		sample_abs <= x"00000031";
+		sample_abs <= x"00000000";
 		reset_n <= '1';
 		wait for clock_period;
 
@@ -129,7 +129,7 @@ BEGIN
 		sample_abs <= x"00000001";
 		wait for clock_period;
 
-		sample_abs <= x"0000001e";
+		sample_abs <= x"00000003";
 		wait for clock_period;
 
 		sample_abs <= x"0000000b";
@@ -159,7 +159,7 @@ BEGIN
 		sample_abs <= x"00000002";
 		wait for clock_period;
 
-		sample_abs <= x"0000001F";
+		sample_abs <= x"00000003";
 		wait for clock_period;
 
 		sample_abs <= x"00000004";
@@ -171,10 +171,10 @@ BEGIN
 		sample_abs <= x"0000000b";
 		wait for clock_period;
 
-		sample_abs <= x"00000020";
+		sample_abs <= x"0000000c";
 		wait for clock_period;
 
-		sample_abs <= x"00000021";
+		sample_abs <= x"00000001";
 		wait for clock_period;
 
 		sample_abs <= x"00000001";
@@ -411,7 +411,7 @@ BEGIN
 		sample_abs <= x"00000003";
 		wait for clock_period;
 
-		sample_abs <= x"00000030";
+		sample_abs <= x"0000000a";
 		wait for clock_period;
 
 		wait until done = '1';

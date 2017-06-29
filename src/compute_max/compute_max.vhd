@@ -86,18 +86,8 @@ begin
         cont_doppler <= cont_doppler + 1;
 
         -- Se ho finito le frequenze doppler per questo satellite
+        -- ovvero il campione è l'ultimo campione del satellite
         if(cont_doppler >= n-1) then
-
-          -- Confronta il max_doppler (massimo relativo) del satellite appena analizzato
-          -- con l'attuale max_satellite (massimo assoluto)
-          if(max_doppler > max_satellite) then
-
-            -- Se il max_doppler è maggiore di max_satellite allora quest'ulitmo viene aggiornato
-            max_satellite <= max_doppler;
-
-            -- Aggiorna la posizione del campione massimo
-            pos_satellite <= cont_satelliti;
-          end if;
 
           -- Resetta il valore di max_doppler (massimo relativo) con il primo campione appena arrivato.
           -- In questo momento il primo campione è il campione più grande per il satellite.
@@ -124,16 +114,26 @@ begin
       -- Se sample_abs è maggiore di max_doppler allora questo viene aggiornato
       max_doppler <= sample_abs;
 
+      -- Confronta il max_doppler (massimo relativo) del satellite appena analizzato
+      -- con l'attuale max_satellite (massimo assoluto)
       if(sample_abs > max_satellite) then
+        -- Se il max_doppler è maggiore di max_satellite allora quest'ulitmo viene aggiornato
+        max_satellite <= sample_abs;
+
         if(cont_campioni < p) then
+          -- Aggiorna la posizione del campione massimo
+          pos_satellite <= cont_satelliti;
           pos_campione <= cont_campioni;
           pos_doppler <= cont_doppler;
           else
             pos_campione <= (others => '0');
             if(cont_doppler >= n-1) then
                 pos_doppler <= (others => '0');
+                -- Aggiorna la posizione del campione massimo
+                pos_satellite <= cont_satelliti + 1;
               else
                 pos_doppler <= cont_doppler + 1;
+                pos_satellite <= cont_satelliti;
               end if;
           end if;
         end if;
