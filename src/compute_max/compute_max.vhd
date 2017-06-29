@@ -48,7 +48,7 @@ end compute_max;
 architecture Behavioral of compute_max is
 
 signal cont_campioni, cont_doppler, cont_satelliti : std_logic_vector(31 downto 0) := (others => '0');
-signal max_doppler, max_satellite : std_logic_vector(sample_width-1 downto 0);
+signal max_satellite : std_logic_vector(sample_width-1 downto 0);
 signal pos_campione, pos_doppler, pos_satellite : std_logic_vector(31 downto 0);
 
 begin
@@ -58,7 +58,6 @@ begin
 
   if(reset_n = '0') then
 
-    max_doppler <= (others => '0');
     max_satellite <= (others => '0');
     cont_campioni <= (others => '0');
     cont_doppler <= (others => '0');
@@ -91,10 +90,6 @@ begin
         -- ovvero il campione è l'ultimo campione del satellite
         if(cont_doppler >= n-1) then
 
-          -- Resetta il valore di max_doppler (massimo relativo) con il primo campione appena arrivato.
-          -- In questo momento il primo campione è il campione più grande per il satellite.
-  		    max_doppler <= sample_abs;
-
           -- Resetta il contatore degli intervalli doppler
           cont_doppler <= (others => '0');
 
@@ -105,53 +100,44 @@ begin
           if(cont_satelliti >= m-1) then
             done <= '1';
             end if;
-
 		      end if;
       end if;
 
     -- *************** PARTE RELATIVA AL CONFRONTO DEI MASSIMI ****************************
-    -- Confronta il valore del campione appena arrivato con il valore massimo
-    -- di questo intervallo di frequenze doppler
-    if(sample_abs > max_doppler) then
+    -- Confronta il campione appena arrivato con l'attuale max_satellite (massimo assoluto)
+    if(sample_abs > max_satellite) then
 
-      -- Se sample_abs è maggiore di max_doppler allora questo viene aggiornato
-      max_doppler <= sample_abs;
+      -- Se il sample_abs è maggiore di max_satellite allora quest'ulitmo viene aggiornato
+      max_satellite <= sample_abs;
 
-      -- Confronta il campione appena arrivato con l'attuale max_satellite (massimo assoluto)
-      if(sample_abs > max_satellite) then
+      -- Se il campione NON è il primo di un intervallo di frequenze doppler
+      -- e se il campione è INTERNO oppure è il primo campione in assoluto
+      if(cont_campioni < p) then
 
-        -- Se il sample_abs è maggiore di max_satellite allora quest'ulitmo viene aggiornato
-        max_satellite <= sample_abs;
+        -- Aggiorna la posizione del campione massimo opportunamente
+        pos_satellite <= cont_satelliti;
+        pos_campione <= cont_campioni;
+        pos_doppler <= cont_doppler;
 
-        -- Se il campione NON è il primo di un intervallo di frequenze doppler
-        -- e se il campione è INTERNO oppure è il primo campione in assoluto
-        if(cont_campioni < p) then
+        else -- Il campione è il primo di un intervallo di frequenze doppler
 
-          -- Aggiorna la posizione del campione massimo opportunamente
-          pos_satellite <= cont_satelliti;
-          pos_campione <= cont_campioni;
-          pos_doppler <= cont_doppler;
+          pos_campione <= (others => '0');
 
-          else -- Il campione è il primo di un intervallo di frequenze doppler
+          -- Se il campione è il primo di un intervallo di frequenze doppler
+          -- ed è il primo campione di un nuovo satellite
+          if(cont_doppler >= n-1) then
 
-            pos_campione <= (others => '0');
+              -- Aggiorna la posizione del campione massimo opportunamente
+              pos_doppler <= (others => '0');
+              pos_satellite <= cont_satelliti + 1;
 
-            -- Se il campione è il primo di un intervallo di frequenze doppler
-            -- ed è il primo campione di un nuovo satellite
-            if(cont_doppler >= n-1) then
+            else -- Il campione è il primo di un intervallo di frequenze doppler
+                 -- ma NON è il primo campione di un nuovo satellite
 
-                -- Aggiorna la posizione del campione massimo opportunamente
-                pos_doppler <= (others => '0');
-                pos_satellite <= cont_satelliti + 1;
-
-              else -- Il campione è il primo di un intervallo di frequenze doppler
-                   -- ma NON è il primo campione di un nuovo satellite
-
-                -- Aggiorna la posizione del campione massimo opportunamente
-                pos_doppler <= cont_doppler + 1;
-                pos_satellite <= cont_satelliti;
-              end if;
-          end if;
+              -- Aggiorna la posizione del campione massimo opportunamente
+              pos_doppler <= cont_doppler + 1;
+              pos_satellite <= cont_satelliti;
+            end if;
         end if;
       end if;
 
