@@ -47,13 +47,8 @@ end compute_max;
 
 architecture Behavioral of compute_max is
 
-signal cont_campioni : std_logic_vector(31 downto 0) := (others => '0');
-signal cont_doppler : std_logic_vector(31 downto 0) := (others => '0');
-signal cont_satelliti : std_logic_vector(31 downto 0) := (others => '0');
-
-signal max_doppler : std_logic_vector(sample_width-1 downto 0);
-signal max_satellite : std_logic_vector(sample_width-1 downto 0);
-
+signal cont_campioni, cont_doppler, cont_satelliti : std_logic_vector(31 downto 0) := (others => '0');
+signal max_doppler, max_satellite : std_logic_vector(sample_width-1 downto 0);
 signal pos_campione, pos_doppler, pos_satellite : std_logic_vector(31 downto 0);
 
 begin
@@ -75,47 +70,72 @@ begin
 
   elsif (rising_edge(clock)) then
 
+    -- Se il campione appena arrivato appartiene allo stesso intervallo di frequenze
+    -- doppler del campione precedente
     if(cont_campioni < p) then
+
+      -- incrementa il contatore dei campioni per quella frequenza doppler
       cont_campioni <= cont_campioni + 1;
-    else
-      cont_campioni <= (0 => '1', others => '0');
-      cont_doppler <= cont_doppler + 1;
 
-      if(cont_doppler >= n-1) then
-        if(max_doppler > max_satellite) then
-          max_satellite <= max_doppler;
+      else -- il campione appena arrivato è il PRIMO di un nuovo intervallo di frequenze
 
-          pos_satellite <= cont_satelliti;
-        end if;
+        -- Resetta il contatore dei campioni
+        cont_campioni <= (0 => '1', others => '0');
 
-		    max_doppler <= sample_abs;
-        cont_doppler <= (others => '0');
-        cont_satelliti <= cont_satelliti + 1;
+        -- Segnala l'inizio dell'analisi di un nuovo intervallo di frequenze doppler
+        cont_doppler <= cont_doppler + 1;
 
-        if(cont_satelliti >= m-1) then
-          done <= '1';
-        else
-          done <= '0';
-        end if;
-		   end if;
-    end if;
+        -- Se ho finito le frequenze doppler per questo satellite
+        if(cont_doppler >= n-1) then
 
+          -- Confronta il max_doppler (massimo relativo) del satellite appena analizzato
+          -- con l'attuale max_satellite (massimo assoluto)
+          if(max_doppler > max_satellite) then
+
+            -- Se il max_doppler è maggiore di max_satellite allora quest'ulitmo viene aggiornato
+            max_satellite <= max_doppler;
+
+            -- Aggiorna la posizione del campione massimo
+            pos_satellite <= cont_satelliti;
+          end if;
+
+          -- Resetta il valore di max_doppler (massimo relativo) con il primo campione appena arrivato.
+          -- In questo momento il primo campione è il campione più grande per il satellite.
+  		    max_doppler <= sample_abs;
+
+          -- Resetta il contatore degli intervalli doppler
+          cont_doppler <= (others => '0');
+
+          -- Segnala la terminazione dell'analisi del satellite
+          cont_satelliti <= cont_satelliti + 1;
+
+          -- Se ho finito di analizzare tutti i satelliti allora l'algoritmo termina
+          if(cont_satelliti >= m-1) then
+            done <= '1';
+          end if;
+
+		      end if;
+      end if;
+
+    -- Confronta il valore del campione appena arrivato con il valore massimo
+    -- di questo intervallo di frequenze doppler
     if(sample_abs > max_doppler) then
+
+      -- Se sample_abs è maggiore di max_doppler allora questo viene aggiornato
       max_doppler <= sample_abs;
 
       -- if(max_doppler > max_satellite) then
       --   pos_campione <= cont_campioni - 1;
       --   pos_doppler <= cont_doppler;
       -- end if;
+      end if;
+
+    campione <= pos_campione;
+    doppler <= pos_doppler;
+    satellite <= pos_satellite;
+
+    max <= max_satellite;
     end if;
-
-  campione <= pos_campione;
-  doppler <= pos_doppler;
-  satellite <= pos_satellite;
-
-  max <= max_satellite;
-
-  end if;
 end process;
 
 end Behavioral;
