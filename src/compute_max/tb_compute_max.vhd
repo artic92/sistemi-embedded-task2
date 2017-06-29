@@ -48,6 +48,9 @@ ARCHITECTURE behavior OF tb_compute_max IS
          clock : IN  std_logic;
          reset_n : IN  std_logic;
          sample_abs : IN  std_logic_vector(sample_width-1 downto 0);
+			campione : OUT STD_LOGIC_VECTOR(31 downto 0);
+         doppler : OUT STD_LOGIC_VECTOR(31 downto 0);
+         satellite : OUT STD_LOGIC_VECTOR(31 downto 0);
          max : OUT  std_logic_vector(sample_width-1 downto 0);
          done : OUT  std_logic
         );
@@ -60,6 +63,9 @@ ARCHITECTURE behavior OF tb_compute_max IS
    signal sample_abs : std_logic_vector(sample_width-1 downto 0) := (others => '0');
 
  	--Outputs
+	signal campione : std_logic_vector(31 downto 0);
+   signal doppler : std_logic_vector(31 downto 0);
+   signal satellite : std_logic_vector(31 downto 0);
    signal max : std_logic_vector(sample_width-1 downto 0);
    signal done : std_logic;
 
@@ -80,6 +86,9 @@ BEGIN
           clock => clock,
           reset_n => reset_n,
           sample_abs => sample_abs,
+			 campione => campione,
+			 doppler => doppler,
+			 satellite => satellite,
           max => max,
           done => done
         );
@@ -406,7 +415,8 @@ BEGIN
 		wait for clock_period;
 
 		wait until done = '1';
-		--reset_n <= '0';
+		wait for 10 ns;
+		reset_n <= '0';
 
       wait;
    end process;
