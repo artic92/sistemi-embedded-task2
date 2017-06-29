@@ -32,9 +32,9 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity compute_max is
     Generic ( sample_width : natural := 32;
-              m : natural := 2;
-              n : natural := 2;
-              p : natural := 3);
+              m : natural := 2; -- Numero di satelliti
+              n : natural := 2; -- Numero di intervalli doppler
+              p : natural := 3); -- Numero di campioni per intervallo doppler
     Port ( clock : in  STD_LOGIC;
            reset_n : in  STD_LOGIC;
            sample_abs : in  STD_LOGIC_VECTOR (sample_width-1 downto 0);
@@ -53,7 +53,7 @@ signal pos_campione, pos_doppler, pos_satellite : std_logic_vector(31 downto 0);
 
 begin
 
-compute_cont : process(clock, reset_n, sample_abs)
+compute_cont : process(clock, reset_n, sample_abs, cont_campioni, cont_doppler, cont_satelliti)
 begin
 
   if(reset_n = '0') then
@@ -63,7 +63,7 @@ begin
     cont_satelliti <= (others => '0');
     done <= '0';
 
-  elsif (rising_edge(clock)) then
+    elsif (rising_edge(clock)) then
 
     -- Se il campione appena arrivato appartiene allo stesso intervallo di frequenze
     -- doppler del campione precedente
@@ -100,11 +100,11 @@ begin
     end if;
 end process;
 
-compute_max : process(clock, reset_n)
+compute_max : process(clock, reset_n, sample_abs, cont_campioni, cont_doppler, cont_satelliti, pos_campione, pos_doppler, pos_satellite, max_satellite)
 begin
 
   if(reset_n = '0') then
-    
+
     campione <= (others => '0');
 	  doppler <= (others => '0');
 	  satellite <= (others => '0');
@@ -123,9 +123,9 @@ begin
         if(cont_campioni < p) then
 
           -- Aggiorna la posizione del campione massimo opportunamente
-          pos_satellite <= cont_satelliti;
           pos_campione <= cont_campioni;
           pos_doppler <= cont_doppler;
+          pos_satellite <= cont_satelliti;
 
           else -- Il campione è il primo di un intervallo di frequenze doppler
 
