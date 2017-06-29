@@ -114,7 +114,7 @@ BEGIN
       -- insert stimulus here
 		wait for 5 ns;
 		-- TEST CASE: primo in assoluto
---		sample_abs <= x"00000050";
+		--sample_abs <= x"00000050";
 		
 		sample_abs <= x"00000000";
 		reset_n <= '1';
@@ -235,13 +235,13 @@ BEGIN
 		wait for clock_period;
 
 		-- TEST CASE: ultimo di un satellite
---		sample_abs <= x"00000050";
+		--sample_abs <= x"00000050";
 		
 		sample_abs <= x"00000000";
 		wait for clock_period;
 		
 		-- TEST CASE: primo di un satellite in mezzo
---		sample_abs <= x"00000050";
+		--sample_abs <= x"00000050";
 		
 		sample_abs <= x"00000001";
 		wait for clock_period;
@@ -421,9 +421,9 @@ BEGIN
 		wait for clock_period;
 		
 		-- TEST CASE: ultimo in assoluto
-		sample_abs <= x"00000050";
+		--sample_abs <= x"00000050";
 
---		sample_abs <= x"0000000a";
+		sample_abs <= x"0000000a";
 		wait for clock_period;
 
 		wait until done = '1';
