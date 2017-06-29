@@ -27,7 +27,10 @@
 --------------------------------------------------------------------------------
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
-use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.std_logic_unsigned.all;
+use IEEE.math_real.ceil;
+use IEEE.math_real.log2;
 
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
@@ -50,16 +53,23 @@ ARCHITECTURE behavior OF tb_compute_max IS
          reset_n : IN  std_logic;
          sample_abs : IN  std_logic_vector(sample_width-1 downto 0);
 			complesso_in : IN std_logic_vector(sample_width-1 downto 0);
-			campione : OUT STD_LOGIC_VECTOR(31 downto 0);
-         doppler : OUT STD_LOGIC_VECTOR(31 downto 0);
-         satellite : OUT STD_LOGIC_VECTOR(31 downto 0);
+      campione : OUT std_logic_vector(natural(ceil(log2(real(p))))-1 downto 0);
+      doppler : OUT std_logic_vector(natural(ceil(log2(real(n))))-1 downto 0);
+      satellite : OUT std_logic_vector(natural(ceil(log2(real(m))))-1 downto 0);
          max : OUT  std_logic_vector(sample_width-1 downto 0);
 			complesso_out : OUT std_logic_vector(sample_width-1 downto 0);
          done : OUT  std_logic
         );
     END COMPONENT;
 
+   	--for all : compute_max use entity work.compute_max(Behavioral);
+    	for all : compute_max use entity work.compute_max(Structural);
+
 	constant sample_width : natural:= 32;
+	constant m : natural:= 5;
+	constant n : natural:= 4;
+	constant p : natural:= 5;
+
    --Inputs
    signal clock : std_logic := '0';
    signal reset_n : std_logic := '0';
@@ -67,9 +77,9 @@ ARCHITECTURE behavior OF tb_compute_max IS
 	signal complesso_in : std_logic_vector(31 downto 0) := (others => '0');
 
  	--Outputs
-	signal campione : std_logic_vector(31 downto 0);
-   signal doppler : std_logic_vector(31 downto 0);
-   signal satellite : std_logic_vector(31 downto 0);
+	signal campione : std_logic_vector(natural(ceil(log2(real(p))))-1 downto 0);
+   signal doppler : std_logic_vector(natural(ceil(log2(real(n))))-1 downto 0);
+   signal satellite : std_logic_vector(natural(ceil(log2(real(m))))-1 downto 0);
    signal max : std_logic_vector(sample_width-1 downto 0);
    signal done : std_logic;
 	signal complesso_out : std_logic_vector(31 downto 0);
@@ -122,9 +132,9 @@ BEGIN
 		wait for 5 ns;
 		-- TEST CASE: primo in assoluto
 		--sample_abs <= x"00000050";
-		
+
 		complesso_in <= x"00010001";
-		sample_abs <= x"00000000";
+		sample_abs <= x"00000002";
 		reset_n <= '1';
 		wait for clock_period;
 
@@ -143,7 +153,7 @@ BEGIN
 		complesso_in <= complesso_in + 65537;
 		sample_abs <= x"00000001";
 		wait for clock_period;
-		
+
 		complesso_in <= complesso_in + 65537;
 		sample_abs <= x"0000001E";
 		wait for clock_period;
@@ -285,10 +295,10 @@ BEGIN
 		complesso_in <= complesso_in + 65537;
 		sample_abs <= x"00000000";
 		wait for clock_period;
-		
+
 		-- TEST CASE: primo di un satellite in mezzo
 		--sample_abs <= x"00000050";
-		
+
 		complesso_in <= complesso_in + 65537;
 		sample_abs <= x"00000001";
 		wait for clock_period;
@@ -524,14 +534,14 @@ BEGIN
 		complesso_in <= complesso_in + 65537;
 		sample_abs <= x"00000003";
 		wait for clock_period;
-		
+
 		-- TEST CASE: ultimo in assoluto
 		--sample_abs <= x"00000050";
 
 		complesso_in <= complesso_in + 65537;
 		sample_abs <= x"0000000a";
 		wait for clock_period;
-		
+
 		wait until done = '1';
 		wait for 20 ns;
 		reset_n <= '0';

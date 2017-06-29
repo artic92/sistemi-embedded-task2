@@ -20,6 +20,9 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.math_real.ceil;
+use IEEE.math_real.log2;
 
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
@@ -39,9 +42,9 @@ entity compute_max is
            reset_n : in  STD_LOGIC;
            sample_abs : in  STD_LOGIC_VECTOR (sample_width-1 downto 0);
            complesso_in : in STD_LOGIC_VECTOR( sample_width-1 downto 0);
-           campione : out STD_LOGIC_VECTOR(31 downto 0);
-           doppler : out STD_LOGIC_VECTOR(31 downto 0);
-           satellite : out STD_LOGIC_VECTOR(31 downto 0);
+           campione : out STD_LOGIC_VECTOR(natural(ceil(log2(real(p))))-1 downto 0);
+           doppler : out STD_LOGIC_VECTOR(natural(ceil(log2(real(n))))-1 downto 0);
+           satellite : out STD_LOGIC_VECTOR(natural(ceil(log2(real(m))))-1 downto 0);
            max : out  STD_LOGIC_VECTOR (sample_width-1 downto 0);
            complesso_out : out STD_LOGIC_VECTOR(sample_width-1 downto 0);
            done : out STD_LOGIC);
@@ -49,9 +52,13 @@ end compute_max;
 
 architecture Behavioral of compute_max is
 
-signal cont_campioni, cont_doppler, cont_satelliti : std_logic_vector(31 downto 0) := (others => '0');
+signal cont_campioni : std_logic_vector(natural(ceil(log2(real(p))))-1 downto 0) := (others => '0');
+signal cont_doppler : std_logic_vector(natural(ceil(log2(real(n))))-1 downto 0) := (others => '0');
+signal cont_satelliti : std_logic_vector(natural(ceil(log2(real(m))))-1 downto 0) := (others => '0');
 signal max_satellite, complesso_sig : std_logic_vector(sample_width-1 downto 0);
-signal pos_campione, pos_doppler, pos_satellite : std_logic_vector(31 downto 0);
+signal pos_campione : std_logic_vector(natural(ceil(log2(real(p))))-1 downto 0);
+signal pos_doppler : std_logic_vector(natural(ceil(log2(real(n))))-1 downto 0);
+signal pos_satellite : std_logic_vector(natural(ceil(log2(real(m))))-1 downto 0);
 
 begin
 
@@ -163,3 +170,207 @@ begin
 end process;
 
 end Behavioral;
+
+architecture Structural of compute_max is
+
+  component register_n_bit
+  generic (
+    n     : natural := 8
+  );
+  port (
+    I       : in  STD_LOGIC_VECTOR (n-1 downto 0);
+    clock   : in  STD_LOGIC;
+    load    : in  STD_LOGIC;
+    reset_n : in  STD_LOGIC;
+    O       : out STD_LOGIC_VECTOR (n-1 downto 0)
+  );
+  end component register_n_bit;
+
+  component counter_modulo_n
+  generic (
+    n : natural := 16
+  );
+  port (
+    clock          : in  STD_LOGIC;
+    count_en       : in  STD_LOGIC;
+    reset_n        : in  STD_LOGIC;
+    up_down        : in  STD_LOGIC;
+    load_conteggio : in  STD_LOGIC;
+    conteggio_in   : in  STD_LOGIC_VECTOR (natural(ceil(log2(real(n))))-1 downto 0);
+    conteggio_out  : out STD_LOGIC_VECTOR ((natural(ceil(log2(real(n)))))-1 downto 0);
+    count_hit      : out STD_LOGIC
+  );
+  end component counter_modulo_n;
+
+component comparatore
+generic (
+  width : natural := 31
+);
+port (
+  A        : in  STD_LOGIC_VECTOR (31 downto 0);
+  B        : in  STD_LOGIC_VECTOR (31 downto 0);
+  AbiggerB : out STD_LOGIC
+);
+end component comparatore;
+
+component livelli2impulsi
+port (
+  input  : in  STD_LOGIC;
+  clock  : in  STD_LOGIC;
+  output : out STD_LOGIC
+);
+end component livelli2impulsi;
+
+
+
+signal contatore_campione_out : STD_LOGIC_VECTOR (natural(ceil(log2(real(p))))-1 downto 0);
+signal contatore_doppler_out : STD_LOGIC_VECTOR (natural(ceil(log2(real(n))))-1 downto 0);
+signal contatore_satellite_out : STD_LOGIC_VECTOR (natural(ceil(log2(real(m))))-1 downto 0);
+signal enable_count_doppler_livelli, enable_count_satellite_livelli, enable_count_doppler_impulsi, enable_count_satellite_impulsi : STD_LOGIC;
+signal max_sig : STD_LOGIC_VECTOR(sample_width-1 downto 0);
+signal comparatore_out, enable_cont_campioni : STD_LOGIC;
+
+begin
+
+	enable : process(clock)
+	begin
+		if(rising_edge(clock)) then
+			enable_cont_campioni <= '1' and reset_n;
+		end if;
+	end process;
+
+  max <= max_sig;
+
+register_campione : register_n_bit
+generic map (
+  n     => natural(ceil(log2(real(p))))
+)
+port map (
+  I       => contatore_campione_out,
+  clock   => clock,
+  load    => comparatore_out,
+  reset_n => reset_n,
+  O       => campione
+);
+
+register_doppler : register_n_bit
+generic map (
+ n     => natural(ceil(log2(real(n))))
+)
+port map (
+  I       => contatore_doppler_out,
+  clock   => clock,
+  load    => comparatore_out,
+  reset_n => reset_n,
+  O       => doppler
+);
+
+register_satellite : register_n_bit
+generic map (
+ n     => natural(ceil(log2(real(m))))
+)
+port map (
+  I       => contatore_satellite_out,
+  clock   => clock,
+  load    => comparatore_out,
+  reset_n => reset_n,
+  O       => satellite
+);
+
+register_max : register_n_bit
+generic map (
+  n     => sample_width
+)
+port map (
+  I       => sample_abs,
+  clock   => not clock,
+  load    => comparatore_out,
+  reset_n => reset_n,
+  O       => max_sig
+);
+
+register_sample : register_n_bit
+generic map (
+  n     => sample_width
+)
+port map (
+  I       => complesso_in,
+  clock   => clock,
+  load    => comparatore_out,
+  reset_n => reset_n,
+  O       => complesso_out
+);
+
+counter_campioni : counter_modulo_n
+generic map (
+  n => p
+)
+port map (
+  clock          => clock,
+  count_en       => enable_cont_campioni,
+  reset_n        => reset_n,
+  up_down        => '0',
+  load_conteggio => '0',
+  conteggio_in   => (others => '0'),
+  conteggio_out  => contatore_campione_out,
+  count_hit      => enable_count_doppler_livelli
+);
+
+enable_count_doppler_impulsivo : livelli2impulsi
+port map (
+  input  => enable_count_doppler_livelli,
+  clock  => clock,
+  output => enable_count_doppler_impulsi
+);
+
+
+counter_doppler : counter_modulo_n
+generic map (
+  n => n
+)
+port map (
+  clock          => clock,
+  count_en       => enable_count_doppler_impulsi,
+  reset_n        => reset_n,
+  up_down        => '0',
+  load_conteggio => '0',
+  conteggio_in   => (others => '0'),
+  conteggio_out  => contatore_doppler_out,
+  count_hit      => enable_count_satellite_livelli
+);
+
+enable_count_satellite_impulsivo : livelli2impulsi
+port map (
+  input  => enable_count_satellite_livelli,
+  clock  => clock,
+  output => enable_count_satellite_impulsi
+);
+
+
+counter_satelliti : counter_modulo_n
+generic map (
+  n => m
+)
+port map (
+  clock          => clock,
+  count_en       => enable_count_satellite_impulsi,
+  reset_n        => reset_n,
+  up_down        => '0',
+  load_conteggio => '0',
+  conteggio_in   => (others => '0'),
+  conteggio_out  => contatore_satellite_out,
+  count_hit      => done
+);
+
+comparatore_i : comparatore
+generic map (
+  width => sample_width
+)
+port map (
+  A        => sample_abs,
+  B        => max_sig,
+  AbiggerB => comparatore_out
+);
+
+
+end Structural;
