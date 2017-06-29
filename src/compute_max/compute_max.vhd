@@ -112,10 +112,10 @@ begin
           -- Se ho finito di analizzare tutti i satelliti allora l'algoritmo termina
           if(cont_satelliti >= m-1) then
             done <= '1';
-          end if;
+            end if;
 
 		      end if;
-      end if;
+       end if;
 
     -- Confronta il valore del campione appena arrivato con il valore massimo
     -- di questo intervallo di frequenze doppler
@@ -124,10 +124,19 @@ begin
       -- Se sample_abs è maggiore di max_doppler allora questo viene aggiornato
       max_doppler <= sample_abs;
 
-      -- if(max_doppler > max_satellite) then
-      --   pos_campione <= cont_campioni - 1;
-      --   pos_doppler <= cont_doppler;
-      -- end if;
+      if(sample_abs > max_satellite) then
+        if(cont_campioni < p) then
+          pos_campione <= cont_campioni;
+          pos_doppler <= cont_doppler;
+          else
+            pos_campione <= (others => '0');
+            if(cont_doppler >= n-1) then
+                pos_doppler <= (others => '0');
+              else
+                pos_doppler <= cont_doppler + 1;
+              end if;
+          end if;
+        end if;
       end if;
 
     campione <= pos_campione;
