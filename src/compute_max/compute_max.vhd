@@ -218,6 +218,15 @@ port (
 );
 end component livelli2impulsi;
 
+component d_edge_triggered
+port (
+  data_in  : in  STD_LOGIC;
+  reset_n  : in  STD_LOGIC;
+  clock    : in  STD_LOGIC;
+  data_out : out STD_LOGIC
+);
+end component d_edge_triggered;
+
 signal contatore_campione_out : STD_LOGIC_VECTOR (natural(ceil(log2(real(c))))-1 downto 0);
 signal contatore_doppler_out : STD_LOGIC_VECTOR (natural(ceil(log2(real(d))))-1 downto 0);
 signal contatore_satellite_out : STD_LOGIC_VECTOR (natural(ceil(log2(real(s))))-1 downto 0);
@@ -256,16 +265,13 @@ port map (
   O       => pos_campione
 );
 
-
-ff_load_doppler : process(clock, reset_n)
-begin
-  if(reset_n = '0') then
-       load_register_doppler_delayed <= '0';
-    else if (rising_edge(clock)) then
-       load_register_doppler_delayed <= comparatore_out;
-      end if;
-    end if;
-end process;
+ff_load_doppler : d_edge_triggered
+port map (
+  data_in  => comparatore_out,
+  reset_n  => reset_n,
+  clock    => clock,
+  data_out => load_register_doppler_delayed
+);
 
 counter_doppler : counter_modulo_n
 generic map (
@@ -316,25 +322,21 @@ port map (
   count_hit      => done
 );
 
-ff_load_satellite : process(clock, reset_n)
-begin
-  if(reset_n = '0') then
-       load_register_satellite_delayed <= '0';
-    else if (rising_edge(clock)) then
-       load_register_satellite_delayed <= load_register_doppler_delayed;
-      end if;
-    end if;
-end process;
+ff_load_satellite : d_edge_triggered
+port map (
+  data_in  => load_register_doppler_delayed,
+  reset_n  => reset_n,
+  clock    => clock,
+  data_out => load_register_satellite_delayed
+);
 
-ff_load_satellite2 : process(clock, reset_n)
-begin
-  if(reset_n = '0') then
-       load_register_satellite_delayed2 <= '0';
-    else if (rising_edge(clock)) then
-       load_register_satellite_delayed2 <= load_register_satellite_delayed;
-      end if;
-    end if;
-end process;
+ff_load_satellite2 : d_edge_triggered
+port map (
+  data_in  => load_register_satellite_delayed,
+  reset_n  => reset_n,
+  clock    => clock,
+  data_out => load_register_satellite_delayed2
+);
 
 register_satellite : register_n_bit
 generic map (
