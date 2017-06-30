@@ -51,7 +51,7 @@ signal pre_conteggio_out : std_logic_vector (natural(ceil(log2(real(n))))-1 down
 
 begin
 
-contatore : process(clock, reset_n)
+contatore : process(clock, reset_n, up_down)
 begin
 	if (reset_n = '0') then
 		count_hit <= '0';

@@ -132,7 +132,7 @@ BEGIN
   		wait for 5 ns;
 
   		sample <= x"00010001";
-      -- TEST CASE: primo in assoluto (0,0,0)
+      -- TEST CASE: primo in assoluto (0,0,0,0x00010001)
       --sample_abs <= x"00000050";
   		sample_abs <= x"00000002";
   		reset_n <= '1';
@@ -291,13 +291,13 @@ BEGIN
   		wait for clock_period;
 
   		sample <= sample + 65537;
-      -- TEST CASE: ultimo di un satellite (4,3,1)
+      -- TEST CASE: ultimo di un satellite (4,3,1,0x00280028)
       --sample_abs <= x"00000050";
   		sample_abs <= x"00000000";
   		wait for clock_period;
 
   		sample <= sample + 65537;
-      -- TEST CASE: primo di un satellite in mezzo (0,0,2)
+      -- TEST CASE: primo di un satellite in mezzo (0,0,2,0x00290029)
       --sample_abs <= x"00000050";
   		sample_abs <= x"00000001";
   		wait for clock_period;
@@ -407,8 +407,8 @@ BEGIN
   		wait for clock_period;
 
   		sample <= sample + 65537;
-      -- TEST CASE: massimo interno all'intervallo doppler (2,1,3)
-      --sample_abs <= x"00000050";
+      -- TEST CASE: massimo interno all'intervallo doppler (2,1,3,0x00440044)
+--      sample_abs <= x"00000050";
   		sample_abs <= x"00000000";
   		wait for clock_period;
 
@@ -537,8 +537,8 @@ BEGIN
   		wait for clock_period;
 
   		sample <= sample + 65537;
-      -- TEST CASE: ultimo in assoluto (4,3,4)
-      --sample_abs <= x"00000050";
+      -- TEST CASE: ultimo in assoluto (4,3,4,0x00640064)
+--      sample_abs <= x"00000050";
   		sample_abs <= x"0000000a";
   		wait for clock_period;
 

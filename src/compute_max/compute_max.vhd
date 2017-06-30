@@ -41,7 +41,7 @@ entity compute_max is
     Port ( clock : in  STD_LOGIC;
            reset_n : in  STD_LOGIC;
            sample_abs : in  STD_LOGIC_VECTOR (sample_width-1 downto 0);
-           sample : in STD_LOGIC_VECTOR( sample_width-1 downto 0);
+           sample : in STD_LOGIC_VECTOR(sample_width-1 downto 0);
            pos_campione : out STD_LOGIC_VECTOR(natural(ceil(log2(real(c))))-1 downto 0);
            pos_doppler : out STD_LOGIC_VECTOR(natural(ceil(log2(real(d))))-1 downto 0);
            pos_satellite : out STD_LOGIC_VECTOR(natural(ceil(log2(real(s))))-1 downto 0);
@@ -221,13 +221,28 @@ end component livelli2impulsi;
 signal contatore_campione_out : STD_LOGIC_VECTOR (natural(ceil(log2(real(c))))-1 downto 0);
 signal contatore_doppler_out : STD_LOGIC_VECTOR (natural(ceil(log2(real(d))))-1 downto 0);
 signal contatore_satellite_out : STD_LOGIC_VECTOR (natural(ceil(log2(real(s))))-1 downto 0);
-signal max_sig : STD_LOGIC_VECTOR(sample_width-1 downto 0);
-signal comparatore_out, enable_count_satellite_livelli, enable_count_satellite_impulsi, enable_cont_campioni, enable_count_doppler, load_register_doppler_delayed, load_register_satellite_delayed, load_register_satellite_delayed2 : STD_LOGIC;
+signal max_sig, sample_abs_sig, sample_sig : STD_LOGIC_VECTOR(sample_width-1 downto 0);
+signal comparatore_out, enable_count_campioni, enable_count_doppler, enable_count_satellite_livelli, enable_count_satellite_impulsi, load_register_doppler_delayed, load_register_satellite_delayed, load_register_satellite_delayed2 : STD_LOGIC;
 
 begin
 
-enable_cont_campioni <= reset_n;
+enable_count_campioni <= reset_n;
 max <= max_sig;
+
+counter_campioni : counter_modulo_n
+generic map (
+  n => c
+)
+port map (
+  clock          => clock,
+  count_en       => enable_count_campioni,
+  reset_n        => reset_n,
+  up_down        => '0',
+  load_conteggio => '0',
+  conteggio_in   => (others => '0'),
+  conteggio_out  => contatore_campione_out,
+  count_hit      => enable_count_doppler
+);
 
 register_campione : register_n_bit
 generic map (
@@ -235,7 +250,7 @@ generic map (
 )
 port map (
   I       => contatore_campione_out,
-  clock   => not clock,
+  clock   => clock,
   load    => comparatore_out,
   reset_n => reset_n,
   O       => pos_campione
@@ -246,31 +261,26 @@ ff_load_doppler : process(clock, reset_n)
 begin
   if(reset_n = '0') then
        load_register_doppler_delayed <= '0';
-    else if (falling_edge(clock)) then
+    else if (rising_edge(clock)) then
        load_register_doppler_delayed <= comparatore_out;
       end if;
     end if;
 end process;
 
-ff_load_satellite : process(clock, reset_n)
-begin
-  if(reset_n = '0') then
-       load_register_satellite_delayed <= '0';
-    else if (falling_edge(clock)) then
-       load_register_satellite_delayed <= load_register_doppler_delayed;
-      end if;
-    end if;
-end process;
-
-ff_load_satellite2 : process(clock, reset_n)
-begin
-  if(reset_n = '0') then
-       load_register_satellite_delayed2 <= '0';
-    else if (rising_edge(clock)) then
-       load_register_satellite_delayed2 <= load_register_satellite_delayed;
-      end if;
-    end if;
-end process;
+counter_doppler : counter_modulo_n
+generic map (
+  n => d
+)
+port map (
+  clock          => clock,
+  count_en       => enable_count_doppler,
+  reset_n        => reset_n,
+  up_down        => '0',
+  load_conteggio => '0',
+  conteggio_in   => (others => '0'),
+  conteggio_out  => contatore_doppler_out,
+  count_hit      => enable_count_satellite_livelli
+);
 
 register_doppler : register_n_bit
 generic map (
@@ -284,79 +294,12 @@ port map (
   O       => pos_doppler
 );
 
-register_satellite : register_n_bit
-generic map (
- n     => natural(ceil(log2(real(s))))
-)
-port map (
-  I       => contatore_satellite_out,
-  clock   => not clock,
-  load    => load_register_satellite_delayed2,
-  reset_n => reset_n,
-  O       => pos_satellite
-);
-
-register_max : register_n_bit
-generic map (
-  n     => sample_width
-)
-port map (
-  I       => sample_abs,
-  clock   => not clock,
-  load    => comparatore_out,
-  reset_n => reset_n,
-  O       => max_sig
-);
-
-register_sample : register_n_bit
-generic map (
-  n     => sample_width
-)
-port map (
-  I       => sample,
-  clock   => clock,
-  load    => comparatore_out,
-  reset_n => reset_n,
-  O       => sample_max
-);
-
-counter_campioni : counter_modulo_n
-generic map (
-  n => c
-)
-port map (
-  clock          => clock,
-  count_en       => enable_cont_campioni,
-  reset_n        => reset_n,
-  up_down        => '0',
-  load_conteggio => '0',
-  conteggio_in   => (others => '0'),
-  conteggio_out  => contatore_campione_out,
-  count_hit      => enable_count_doppler
-);
-
-counter_doppler : counter_modulo_n
-generic map (
-  n => d
-)
-port map (
-  clock          => not clock,
-  count_en       => enable_count_doppler,
-  reset_n        => reset_n,
-  up_down        => '0',
-  load_conteggio => '0',
-  conteggio_in   => (others => '0'),
-  conteggio_out  => contatore_doppler_out,
-  count_hit      => enable_count_satellite_livelli
-);
-
 enable_count_satellite_impulsivo : livelli2impulsi
 port map (
   input  => enable_count_satellite_livelli,
   clock  => clock,
   output => enable_count_satellite_impulsi
 );
-
 
 counter_satelliti : counter_modulo_n
 generic map (
@@ -373,6 +316,86 @@ port map (
   count_hit      => done
 );
 
+ff_load_satellite : process(clock, reset_n)
+begin
+  if(reset_n = '0') then
+       load_register_satellite_delayed <= '0';
+    else if (rising_edge(clock)) then
+       load_register_satellite_delayed <= load_register_doppler_delayed;
+      end if;
+    end if;
+end process;
+
+ff_load_satellite2 : process(clock, reset_n)
+begin
+  if(reset_n = '0') then
+       load_register_satellite_delayed2 <= '0';
+    else if (rising_edge(clock)) then
+       load_register_satellite_delayed2 <= load_register_satellite_delayed;
+      end if;
+    end if;
+end process;
+
+register_satellite : register_n_bit
+generic map (
+  n     => natural(ceil(log2(real(s))))
+)
+port map (
+  I       => contatore_satellite_out,
+  clock   => clock,
+  load    => load_register_satellite_delayed2,
+  reset_n => reset_n,
+  O       => pos_satellite
+);
+
+register_sample_abs : register_n_bit
+generic map (
+  n     => sample_width
+)
+port map (
+  I       => sample_abs,
+  clock   => clock,
+  load    => reset_n,
+  reset_n => reset_n,
+  O       => sample_abs_sig
+);
+
+register_max : register_n_bit
+generic map (
+  n     => sample_width
+)
+port map (
+  I       => sample_abs_sig,
+  clock   => clock,
+  load    => comparatore_out,
+  reset_n => reset_n,
+  O       => max_sig
+);
+
+register_sample : register_n_bit
+generic map (
+  n     => sample_width
+)
+port map (
+  I       => sample,
+  clock   => clock,
+  load    => reset_n,
+  reset_n => reset_n,
+  O       => sample_sig
+);
+
+register_sample_max : register_n_bit
+generic map (
+  n     => sample_width
+)
+port map (
+  I       => sample_sig,
+  clock   => clock,
+  load    => comparatore_out,
+  reset_n => reset_n,
+  O       => sample_max
+);
+
 comparatore_i : comparatore
 generic map (
   width => sample_width
@@ -382,6 +405,5 @@ port map (
   B        => max_sig,
   AbiggerB => comparatore_out
 );
-
 
 end Structural;
