@@ -45,19 +45,19 @@ ARCHITECTURE behavior OF tb_compute_max IS
 
     COMPONENT compute_max
     GENERIC ( sample_width : natural := 32;
-              m : natural := 2;
-              n : natural := 2;
-              p : natural := 3);
+              s : natural := 2;
+              d : natural := 2;
+              c : natural := 3);
     PORT(
          clock : IN  std_logic;
          reset_n : IN  std_logic;
          sample_abs : IN  std_logic_vector(sample_width-1 downto 0);
-			complesso_in : IN std_logic_vector(sample_width-1 downto 0);
-      campione : OUT std_logic_vector(natural(ceil(log2(real(p))))-1 downto 0);
-      doppler : OUT std_logic_vector(natural(ceil(log2(real(n))))-1 downto 0);
-      satellite : OUT std_logic_vector(natural(ceil(log2(real(m))))-1 downto 0);
+			   sample : IN std_logic_vector(sample_width-1 downto 0);
+         pos_campione : OUT std_logic_vector(natural(ceil(log2(real(c))))-1 downto 0);
+         pos_doppler : OUT std_logic_vector(natural(ceil(log2(real(d))))-1 downto 0);
+         pos_satellite : OUT std_logic_vector(natural(ceil(log2(real(s))))-1 downto 0);
          max : OUT  std_logic_vector(sample_width-1 downto 0);
-			complesso_out : OUT std_logic_vector(sample_width-1 downto 0);
+			   sample_max : OUT std_logic_vector(sample_width-1 downto 0);
          done : OUT  std_logic
         );
     END COMPONENT;
@@ -66,23 +66,23 @@ ARCHITECTURE behavior OF tb_compute_max IS
     	for all : compute_max use entity work.compute_max(Structural);
 
 	constant sample_width : natural:= 32;
-	constant m : natural:= 5;
-	constant n : natural:= 4;
-	constant p : natural:= 5;
+	constant s : natural:= 5;
+	constant d : natural:= 4;
+	constant c : natural:= 5;
 
    --Inputs
    signal clock : std_logic := '0';
    signal reset_n : std_logic := '0';
    signal sample_abs : std_logic_vector(sample_width-1 downto 0) := (others => '0');
-	signal complesso_in : std_logic_vector(31 downto 0) := (others => '0');
+	 signal sample : std_logic_vector(31 downto 0) := (others => '0');
 
  	--Outputs
-	signal campione : std_logic_vector(natural(ceil(log2(real(p))))-1 downto 0);
-   signal doppler : std_logic_vector(natural(ceil(log2(real(n))))-1 downto 0);
-   signal satellite : std_logic_vector(natural(ceil(log2(real(m))))-1 downto 0);
-   signal max : std_logic_vector(sample_width-1 downto 0);
-   signal done : std_logic;
-	signal complesso_out : std_logic_vector(31 downto 0);
+	signal pos_campione : std_logic_vector(natural(ceil(log2(real(c))))-1 downto 0);
+  signal pos_doppler : std_logic_vector(natural(ceil(log2(real(d))))-1 downto 0);
+  signal pos_satellite : std_logic_vector(natural(ceil(log2(real(s))))-1 downto 0);
+  signal max : std_logic_vector(sample_width-1 downto 0);
+  signal done : std_logic;
+	signal sample_max : std_logic_vector(31 downto 0);
 
    -- Clock period definitions
    constant clock_period : time := 10 ns;
@@ -93,19 +93,19 @@ BEGIN
    uut: compute_max
    GENERIC MAP(
           sample_width => 32,
-          m => 5,
-          n => 4,
-          p => 5
+          s => 5,
+          d => 4,
+          c => 5
    )
    PORT MAP (
           clock => clock,
           reset_n => reset_n,
           sample_abs => sample_abs,
-			 campione => campione,
-			 complesso_in => complesso_in,
-			 complesso_out => complesso_out,
-			 doppler => doppler,
-			 satellite => satellite,
+			    pos_campione => pos_campione,
+			    sample => sample,
+			    sample_max => sample_max,
+			    pos_doppler => pos_doppler,
+			    pos_satellite => pos_satellite,
           max => max,
           done => done
         );
@@ -129,425 +129,422 @@ BEGIN
       wait for clock_period*10;
 
       -- insert stimulus here
-		wait for 5 ns;
-		-- TEST CASE: primo in assoluto
-		--sample_abs <= x"00000050";
-
-		complesso_in <= x"00010001";
-		sample_abs <= x"00000002";
-		reset_n <= '1';
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000008";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000007";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000002";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000001";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"0000001E";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"0000000b";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"0000000f";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000009";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000008";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000001";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000001";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000002";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000002";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000002";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000003";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000004";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"0000000a";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"0000000b";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"0000000c";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000001";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000001";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000001";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000001";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000001";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000002";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000001";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000007";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000000";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"0000000a";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000003";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000004";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000008";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"0000000f";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000014";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000010";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000011";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000012";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000013";
-		wait for clock_period;
-
-		-- TEST CASE: ultimo di un satellite
-		--sample_abs <= x"00000050";
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000000";
-		wait for clock_period;
-
-		-- TEST CASE: primo di un satellite in mezzo
-		--sample_abs <= x"00000050";
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000001";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000002";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000003";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000004";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000005";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"0000000a";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"0000000f";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"0000000e";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"0000000c";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"0000000b";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000008";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000007";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000006";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000005";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000004";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000004";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000004";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"0000001c";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000003";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000003";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000001";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000010";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000000";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000004";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000008";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000006";
-		wait for clock_period;
-		
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000001";
-		wait for clock_period;
-
-		-- TEST CASE: massimo interno all'intervallo doppler
-		--sample_abs <= x"00000050";
-		
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000000";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000000";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000003";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000002";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"0000000a";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000009";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000001";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000000";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000007";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000003";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000002";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000000";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000000";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000003";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000005";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000006";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000000";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000008";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000000";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000008";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000001";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000005";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000004";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000003";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000004";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000005";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000000";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000006";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000003";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000003";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000003";
-		wait for clock_period;
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"00000003";
-		wait for clock_period;
-
-		-- TEST CASE: ultimo in assoluto
-		--sample_abs <= x"00000050";
-
-		complesso_in <= complesso_in + 65537;
-		sample_abs <= x"0000000a";
-		wait for clock_period;
-
-		wait until done = '1';
-		wait for 20 ns;
-		reset_n <= '0';
+  		wait for 5 ns;
+
+  		sample <= x"00010001";
+      -- TEST CASE: primo in assoluto (0,0,0)
+      --sample_abs <= x"00000050";
+  		sample_abs <= x"00000002";
+  		reset_n <= '1';
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000008";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000007";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000002";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000001";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"0000001E";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"0000000b";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"0000000f";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000009";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000008";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000001";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000001";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000002";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000002";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000002";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000003";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000004";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"0000000a";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"0000000b";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"0000000c";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000001";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000001";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000001";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000001";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000001";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000002";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000001";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000007";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000000";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"0000000a";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000003";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000004";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000008";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"0000000f";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000014";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000010";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000011";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000012";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000013";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+      -- TEST CASE: ultimo di un satellite (4,3,1)
+      --sample_abs <= x"00000050";
+  		sample_abs <= x"00000000";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+      -- TEST CASE: primo di un satellite in mezzo (0,0,2)
+      --sample_abs <= x"00000050";
+  		sample_abs <= x"00000001";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000002";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000003";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000004";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000005";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"0000000a";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"0000000f";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"0000000e";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"0000000c";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"0000000b";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000008";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000007";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000006";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000005";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000004";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000004";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000004";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"0000001c";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000003";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000003";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000001";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000010";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000000";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000004";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000008";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000006";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000001";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+      -- TEST CASE: massimo interno all'intervallo doppler (2,1,3)
+      --sample_abs <= x"00000050";
+  		sample_abs <= x"00000000";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000000";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000003";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000002";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"0000000a";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000009";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000001";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000000";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000007";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000003";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000002";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000000";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000000";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000003";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000005";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000006";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000000";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000008";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000000";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000008";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000001";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000005";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000004";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000003";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000004";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000005";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000000";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000006";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000003";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000003";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000003";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+  		sample_abs <= x"00000003";
+  		wait for clock_period;
+
+  		sample <= sample + 65537;
+      -- TEST CASE: ultimo in assoluto (4,3,4)
+      --sample_abs <= x"00000050";
+  		sample_abs <= x"0000000a";
+  		wait for clock_period;
+
+  		wait until done = '1';
+  		wait for 20 ns;
+  		reset_n <= '0';
 
       wait;
    end process;
