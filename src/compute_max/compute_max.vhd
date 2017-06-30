@@ -226,18 +226,13 @@ end component livelli2impulsi;
 signal contatore_campione_out : STD_LOGIC_VECTOR (natural(ceil(log2(real(p))))-1 downto 0);
 signal contatore_doppler_out : STD_LOGIC_VECTOR (natural(ceil(log2(real(n))))-1 downto 0);
 signal contatore_satellite_out : STD_LOGIC_VECTOR (natural(ceil(log2(real(m))))-1 downto 0);
-signal enable_count_doppler_livelli, enable_count_satellite_livelli, enable_count_doppler_impulsi, enable_count_satellite_impulsi : STD_LOGIC;
+signal enable_count_satellite_livelli, enable_count_doppler, enable_count_satellite_impulsi : STD_LOGIC;
 signal max_sig : STD_LOGIC_VECTOR(sample_width-1 downto 0);
-signal comparatore_out, enable_cont_campioni : STD_LOGIC;
+signal comparatore_out, enable_cont_campioni, load_register_doppler_delayed, load_register_satellite_delayed, load_register_satellite_delayed2 : STD_LOGIC;
 
 begin
 
-	enable : process(clock)
-	begin
-		if(rising_edge(clock)) then
-			enable_cont_campioni <= '1' and reset_n;
-		end if;
-	end process;
+enable_cont_campioni <= reset_n;
 
   max <= max_sig;
 
@@ -247,11 +242,42 @@ generic map (
 )
 port map (
   I       => contatore_campione_out,
-  clock   => clock,
+  clock   => not clock,
   load    => comparatore_out,
   reset_n => reset_n,
   O       => campione
 );
+
+
+ff_load_doppler : process(clock, reset_n)
+begin
+  if(reset_n = '0') then
+       load_register_doppler_delayed <= '0';
+    else if (falling_edge(clock)) then
+       load_register_doppler_delayed <= comparatore_out;
+      end if;
+    end if;
+end process;
+
+ff_load_satellite : process(clock, reset_n)
+begin
+  if(reset_n = '0') then
+       load_register_satellite_delayed <= '0';
+    else if (falling_edge(clock)) then
+       load_register_satellite_delayed <= load_register_doppler_delayed;
+      end if;
+    end if;
+end process;
+
+ff_load_satellite2 : process(clock, reset_n)
+begin
+  if(reset_n = '0') then
+       load_register_satellite_delayed2 <= '0';
+    else if (rising_edge(clock)) then
+       load_register_satellite_delayed2 <= load_register_satellite_delayed;
+      end if;
+    end if;
+end process;
 
 register_doppler : register_n_bit
 generic map (
@@ -260,7 +286,7 @@ generic map (
 port map (
   I       => contatore_doppler_out,
   clock   => clock,
-  load    => comparatore_out,
+  load    => load_register_doppler_delayed,
   reset_n => reset_n,
   O       => doppler
 );
@@ -271,8 +297,8 @@ generic map (
 )
 port map (
   I       => contatore_satellite_out,
-  clock   => clock,
-  load    => comparatore_out,
+  clock   => not clock,
+  load    => load_register_satellite_delayed2,
   reset_n => reset_n,
   O       => satellite
 );
@@ -313,24 +339,16 @@ port map (
   load_conteggio => '0',
   conteggio_in   => (others => '0'),
   conteggio_out  => contatore_campione_out,
-  count_hit      => enable_count_doppler_livelli
+  count_hit      => enable_count_doppler
 );
-
-enable_count_doppler_impulsivo : livelli2impulsi
-port map (
-  input  => enable_count_doppler_livelli,
-  clock  => clock,
-  output => enable_count_doppler_impulsi
-);
-
 
 counter_doppler : counter_modulo_n
 generic map (
   n => n
 )
 port map (
-  clock          => clock,
-  count_en       => enable_count_doppler_impulsi,
+  clock          => not clock,
+  count_en       => enable_count_doppler,
   reset_n        => reset_n,
   up_down        => '0',
   load_conteggio => '0',

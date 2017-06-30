@@ -402,11 +402,14 @@ BEGIN
 		complesso_in <= complesso_in + 65537;
 		sample_abs <= x"00000006";
 		wait for clock_period;
-
+		
 		complesso_in <= complesso_in + 65537;
 		sample_abs <= x"00000001";
 		wait for clock_period;
 
+		-- TEST CASE: massimo interno all'intervallo doppler
+		--sample_abs <= x"00000050";
+		
 		complesso_in <= complesso_in + 65537;
 		sample_abs <= x"00000000";
 		wait for clock_period;
