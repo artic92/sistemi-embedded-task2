@@ -20,6 +20,7 @@
 --! @file complex_abs.vhd
 --! @author Antonio Riccio, Andrea Scognamiglio, Stefano Sorrentino
 --! @brief Blocco che calcola il massimo in un insieme di campioni
+--! @anchor compute_max
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
@@ -40,7 +41,7 @@ use IEEE.math_real.log2;
 --! @details Il componente calcola il massimo di un insieme di campioni espressi
 --!   mediante il loro modulo
 entity compute_max is
-    Generic ( sample_width : natural := 32; --! Parallelismo in bit del modulo del campione
+    Generic ( sample_width : natural := 32; --! Parallelismo in bit  del campione
               s : natural := 2;             --! Numero di satelliti
               d : natural := 2;             --! Numero di intervalli doppler
               c : natural := 3);            --! Numero di campioni per intervallo doppler
