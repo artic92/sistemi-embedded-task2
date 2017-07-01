@@ -33,6 +33,10 @@ use IEEE.STD_LOGIC_1164.ALL;
 --use UNISIM.VComponents.all;
 
 --! @brief Componente che calcola il modulo di un numero complesso
+--! @details Il valore complesso deve essere fornito nel seguente modo:
+--!		- prima metà: parte immaginaria
+--!		- seconda metà: parte reale
+--!
 --! @note Il componente non applica la formula completa per il calcolo del modulo
 --! 	ma trascura l'operazione di radice quadrata perchè non necessaria ai fini
 --! 	dell'applicazione che utilizzerà questo componente.
@@ -46,9 +50,10 @@ entity complex_abs is
 end complex_abs;
 
 --! @brief Architettura del componente descritta nel dominio strutturale
---! @details L'archittettura fa uso di componenti riutilizzati in altre applicazioni
+--! @details L'archittettura fa riusco di componenti utilizzati per altri progetti
 architecture Structural of complex_abs is
 
+--! Moltiplicatore di Booth
 component moltiplicatore_booth
 generic (
   n : natural := 4;
@@ -65,6 +70,7 @@ port (
 );
 end component moltiplicatore_booth;
 
+--! Addzionatore ripple carry
 component ripple_carry_adder
 generic (
   n : natural := 4
@@ -79,6 +85,7 @@ port (
 );
 end component ripple_carry_adder;
 
+--! Automa a stati per controllare i segnali dei moltiplicatori
 component parte_controllo_complex_abs
 port (
   clock       : in  STD_LOGIC;
@@ -91,12 +98,19 @@ port (
 end component parte_controllo_complex_abs;
 
 signal en_mul_sig, done_real_sig, done_imag_sig, done_mul_sig, reset_n_all_sig : std_logic;
-signal power_real_sig, power_imag_sig, res_add_sig : std_logic_vector(complex_width-1 downto 0);
+
+--! Prodotto della parte reale con se stessa (equivalente al quadrato della parte reale)
+signal power_real_sig : std_logic_vector(complex_width-1 downto 0);
+--! Prodotto della parte immaginaria con se stessa (equivalente al quadrato della parte immaginaria)
+signal power_imag_sig : std_logic_vector(complex_width-1 downto 0);
+--! Risultato della somma dei quadrati
+signal res_add_sig : std_logic_vector(complex_width-1 downto 0);
 
 begin
 
 done_mul_sig <= done_real_sig and done_imag_sig;
 
+--! Effettua il quadrato della parte reale
 multiplier_real : moltiplicatore_booth
 generic map (
   n => (complex_width)/2,
@@ -112,6 +126,7 @@ port map (
   P       => power_real_sig
 );
 
+--! Effettua il quadrato della parte immaginaria
 multiplier_imag : moltiplicatore_booth
 generic map (
   n => (complex_width)/2,
@@ -127,6 +142,7 @@ port map (
   P       => power_imag_sig
 );
 
+--! Somma i quadrati di parte reale ed immaginaria
 mul_results_add : ripple_carry_adder
 generic map (
   n => complex_width
@@ -140,6 +156,7 @@ port map (
   S     => abs_value
 );
 
+--! Controlla i segnali di controllo dei moltiplicatori
 control_unit : parte_controllo_complex_abs
 port map (
   clock       => clock,
