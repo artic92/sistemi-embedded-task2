@@ -74,7 +74,7 @@ ARCHITECTURE behavior OF tb_compute_max IS
    signal clock : std_logic := '0';
    signal reset_n : std_logic := '0';
    signal sample_abs : std_logic_vector(sample_width-1 downto 0) := (others => '0');
-	 signal sample : std_logic_vector(31 downto 0) := (others => '0');
+	 signal sample : std_logic_vector(sample_width-1 downto 0) := (others => '0');
 
  	--Outputs
 	signal pos_campione : std_logic_vector(natural(ceil(log2(real(c))))-1 downto 0);
