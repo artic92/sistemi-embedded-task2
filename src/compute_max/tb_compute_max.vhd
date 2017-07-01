@@ -4,7 +4,7 @@
 --
 -- Create Date:   12:30:47 06/28/2017
 -- Design Name:
--- Module Name:   /media/sf_SistemiEmbedded/workbench/ISE/SE/compute_max/tb_compute_max.vhd
+-- Module Name:   tb_compute_max.vhd
 -- Project Name:  compute_max
 -- Target Device:
 -- Tool versions:

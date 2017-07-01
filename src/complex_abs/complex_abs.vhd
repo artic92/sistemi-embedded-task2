@@ -17,6 +17,9 @@
 -- Additional Comments:
 --
 ----------------------------------------------------------------------------------
+--! @file complex_abs.vhd
+--! @author Antonio Riccio, Andrea Scognamiglio, Stefano Sorrentino
+--! @brief Blocco che calcola il modulo di un numero complesso
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
@@ -29,15 +32,21 @@ use IEEE.STD_LOGIC_1164.ALL;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
+--! @brief Componente che calcola il modulo di un numero complesso
+--! @note Il componente non applica la formula completa per il calcolo del modulo
+--! 	ma trascura l'operazione di radice quadrata perchè non necessaria ai fini
+--! 	dell'applicazione che utilizzerà questo componente.
 entity complex_abs is
-	 Generic ( complex_width : natural := 32 );
-    Port ( clock : in STD_LOGIC;
-					 reset_n : in STD_LOGIC;
-					 complex_value : in  STD_LOGIC_VECTOR (complex_width-1 downto 0);
-           abs_value : out  STD_LOGIC_VECTOR (complex_width-1 downto 0);
-					 done : out STD_LOGIC);
+	 Generic ( complex_width : natural := 32 );	--! Parallelismo in bit del numero complesso (inteso come somma di parte reale e immaginaria)
+    Port ( clock : in STD_LOGIC;							--! Segnale di temporizzazione
+					 reset_n : in STD_LOGIC;						--! Segnale di reset 0-attivo
+					 complex_value : in  STD_LOGIC_VECTOR (complex_width-1 downto 0); --! Numero complesso di cui calcolare il modulo
+           abs_value : out  STD_LOGIC_VECTOR (complex_width-1 downto 0);	  --! Modulo del numero complesso
+					 done : out STD_LOGIC);																						--! Segnale di terminazione delle operazioni
 end complex_abs;
 
+--! @brief Architettura del componente descritta nel dominio strutturale
+--! @details L'archittettura fa uso di componenti riutilizzati in altre applicazioni
 architecture Structural of complex_abs is
 
 component moltiplicatore_booth
