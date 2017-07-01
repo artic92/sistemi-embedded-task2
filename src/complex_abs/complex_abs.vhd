@@ -33,8 +33,9 @@ entity complex_abs is
 	 Generic ( complex_width : natural := 32 );
     Port ( clock : in STD_LOGIC;
 					 reset_n : in STD_LOGIC;
-					 input_value : in  STD_LOGIC_VECTOR (complex_width-1 downto 0);
-           abs_value : out  STD_LOGIC_VECTOR ((complex_width/2)-1 downto 0));
+					 complex_value : in  STD_LOGIC_VECTOR (complex_width-1 downto 0);
+           abs_value : out  STD_LOGIC_VECTOR (complex_width-1 downto 0);
+					 done : out STD_LOGIC);
 end complex_abs;
 
 architecture Structural of complex_abs is
@@ -55,7 +56,6 @@ port (
 );
 end component moltiplicatore_booth;
 
-
 component ripple_carry_adder
 generic (
   n : natural := 4
@@ -70,35 +70,18 @@ port (
 );
 end component ripple_carry_adder;
 
-component square_root
-generic (
-  n : natural := 8
-);
-port (
-  clock   : in  STD_LOGIC;
-  reset_n : in  STD_LOGIC;
-  enable  : in  STD_LOGIC;
-  D       : in  STD_LOGIC_VECTOR (n-1 downto 0);
-  root    : out STD_LOGIC_VECTOR ((n/2)-1 downto 0);
-  done    : out STD_LOGIC
-);
-end component square_root;
-
 component parte_controllo_complex_abs
 port (
   clock       : in  STD_LOGIC;
   reset_n     : in  STD_LOGIC;
   done_mul    : in  STD_LOGIC;
-  done_sqrt   : in  STD_LOGIC;
 	reset_n_all : out STD_LOGIC;
   enable_mul  : out STD_LOGIC;
-  enable_sqrt : out STD_LOGIC
+	done 				: out STD_LOGIC
 );
 end component parte_controllo_complex_abs;
 
-signal en_mul_sig, en_sqrt_sig : std_logic;
-signal done_real_sig, done_imag_sig, done_mul_sig, done_sqrt_sig : std_logic;
-signal add_ovfl_sig, reset_n_all_sig : std_logic;
+signal en_mul_sig, done_real_sig, done_imag_sig, done_mul_sig, reset_n_all_sig : std_logic;
 signal power_real_sig, power_imag_sig, res_add_sig : std_logic_vector(complex_width-1 downto 0);
 
 begin
@@ -111,8 +94,8 @@ generic map (
   m => (complex_width)/2
 )
 port map (
-  A       => input_value((complex_width/2)-1 downto 0),
-  B       => input_value((complex_width/2)-1 downto 0),
+  A       => complex_value((complex_width/2)-1 downto 0),
+  B       => complex_value((complex_width/2)-1 downto 0),
   enable  => en_mul_sig,
   reset_n => reset_n_all_sig,
   clock   => clock,
@@ -126,8 +109,8 @@ generic map (
   m => (complex_width)/2
 )
 port map (
-  A       => input_value(complex_width-1 downto complex_width/2),
-  B       => input_value(complex_width-1 downto complex_width/2),
+  A       => complex_value(complex_width-1 downto complex_width/2),
+  B       => complex_value(complex_width-1 downto complex_width/2),
   enable  => en_mul_sig,
   reset_n => reset_n_all_sig,
   clock   => clock,
@@ -135,7 +118,7 @@ port map (
   P       => power_imag_sig
 );
 
-mul_res_add : ripple_carry_adder
+mul_results_add : ripple_carry_adder
 generic map (
   n => complex_width
 )
@@ -144,21 +127,8 @@ port map (
   B     => power_imag_sig,
   c_in  => '0',
   c_out => open,
-  ovfl  => add_ovfl_sig,
-  S     => res_add_sig
-);
-
-square_add_res : square_root
-generic map (
-	n => complex_width
-)
-port map (
-	clock   => clock,
-	reset_n => reset_n_all_sig,
-	enable  => en_sqrt_sig,
-	D       => res_add_sig,
-	root    => abs_value,
-	done    => done_sqrt_sig
+  ovfl  => open,
+  S     => abs_value
 );
 
 control_unit : parte_controllo_complex_abs
@@ -166,10 +136,9 @@ port map (
   clock       => clock,
   reset_n     => reset_n,
   done_mul    => done_mul_sig,
-  done_sqrt   => done_sqrt_sig,
 	reset_n_all => reset_n_all_sig,
   enable_mul  => en_mul_sig,
-  enable_sqrt => en_sqrt_sig
+	done 				=> done
 );
 
 end Structural;

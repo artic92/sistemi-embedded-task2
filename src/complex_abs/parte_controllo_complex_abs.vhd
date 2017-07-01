@@ -33,16 +33,15 @@ entity parte_controllo_complex_abs is
     Port ( clock : in  STD_LOGIC;
            reset_n : in  STD_LOGIC;
            done_mul : in STD_LOGIC;
-           done_sqrt : in STD_LOGIC;
            reset_n_all : out STD_LOGIC;
            enable_mul : out STD_LOGIC;
-           enable_sqrt : out STD_LOGIC);
+           done : out STD_LOGIC);
 end parte_controllo_complex_abs;
 
 architecture Behavioral of parte_controllo_complex_abs is
 
-  type state is (reset, waiting_mul, add, waiting_sqrt);
-  signal current_state, next_state : state := reset;
+type state is (reset, waiting_mul, add, op_done);
+signal current_state, next_state : state := reset;
 
 begin
 
@@ -55,12 +54,12 @@ begin
   	end if;
   end process;
 
-  fsm : process(current_state, reset_n, done_mul, done_sqrt)
+  fsm : process(current_state, reset_n, done_mul)
   begin
 
   	enable_mul <= '0';
-  	enable_sqrt <= '0';
     reset_n_all <= '1';
+    done <= '0';
 
   	case current_state is
   		when reset =>
@@ -78,14 +77,10 @@ begin
                             next_state <= waiting_mul;
                           end if;
       when add =>
-                    next_state <= waiting_sqrt;
-  		when waiting_sqrt =>
-                          enable_sqrt <= '1';
-                          if(done_sqrt = '1') then
-                            next_state <= reset;
-                          else
-                            next_state <= waiting_sqrt;
-                          end if;
+                    next_state <= op_done;
+      when op_done =>
+                    done <= '1';
+                    next_state <= reset;
   	end case;
   end process;
 
