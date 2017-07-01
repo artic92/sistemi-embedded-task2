@@ -94,19 +94,19 @@ BEGIN
 		  wait for clock_period*10;
 
       -- insert stimulus here
-      reset_n <= '1';
       wait for 5 ns;
-
-      complex_value <= x"00050004";
-
-      wait until done = '1';
-	  	complex_value <= x"00020003";
+      complex_value <= x"00050004"; -- 0x00000029
+      wait for 5 ns;
+      reset_n <= '1';
 
       wait until done = '1';
-      complex_value <= x"11110006";
+	  	complex_value <= x"00020003"; -- 0x0000000D
 
       wait until done = '1';
-      complex_value <= x"00051000";
+      complex_value <= x"FFFF0006"; -- 0x00000025
+
+      wait until done = '1';
+      complex_value <= x"00051000"; -- 0x01000019
 
       wait;
    end process;
