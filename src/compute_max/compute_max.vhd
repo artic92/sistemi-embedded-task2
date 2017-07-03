@@ -469,7 +469,7 @@ port map (
 );
 
 --! Comparatore necessario a comparare il campione in ingresso con il massimo
-comparatore : comparatore
+comparatore_i : comparatore
 generic map (
   width => sample_width
 )

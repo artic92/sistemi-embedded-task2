@@ -104,7 +104,7 @@ signal abs_value_sig : std_logic_vector(sample_width-1 downto 0);
 begin
 
 --! Istanza del componente @ref complex_abs
-complex_abs : complex_abs
+complex_abs_i : complex_abs
 generic map (
   complex_width => sample_width
 )
@@ -117,7 +117,7 @@ port map (
 );
 
 --! Istanza del componente @ref compute_max
-compute_max : compute_max
+compute_max_i : compute_max
 generic map (
   sample_width => sample_width,
   s => s,
