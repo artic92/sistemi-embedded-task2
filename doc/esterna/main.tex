@@ -1,0 +1,171 @@
+\documentclass[12pt,a4paper,twoside,openany]{book}
+\usepackage{textcomp}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage{pdfpages}
+\usepackage{graphicx}
+\usepackage{rotating}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{picture}
+\usepackage{multirow}
+\usepackage{pifont}
+\usepackage[hidelinks]{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{fit,shapes.geometric}
+
+\providecommand*{\cmark}{\ding{51}}
+\providecommand*{\xmark}{\ding{55}}
+
+\newcommand\abs[1]{\left|#1\right|}
+
+\newcounter{nodemarkers}
+\newcommand\circletext[1]{%
+	\tikz[overlay,remember picture] 
+	\node (marker-\arabic{nodemarkers}-a) at (0,1.5ex) {};%
+	#1%
+	\tikz[overlay,remember picture]
+	\node (marker-\arabic{nodemarkers}-b) at (0,0){};%
+	\tikz[overlay,remember picture,inner sep=2pt]
+	\node[draw,ellipse,fit=(marker-\arabic{nodemarkers}-a.center) (marker-\arabic{nodemarkers}-b.center),color=red] {};%
+	\stepcounter{nodemarkers}%
+}
+
+%codice per mettere logo in sfondo ad ogni pagina
+\usepackage{eso-pic}
+
+\AddToShipoutPicture
+{
+  \put(\LenToUnit{.4\textwidth}, \LenToUnit{.5\textheight}){\includegraphics{immagini/logo}}%
+}
+
+\lstset{basicstyle=\footnotesize\ttfamily\color{black}, language=vhdl, keywordstyle=\color{blue}\bfseries, stringstyle=\color{black}, showstringspaces=false, frame=single, numbers=left, numbersep=5pt, numberstyle=\tiny\color{black}}
+
+\graphicspath{immagini/}
+\author{Antonio Riccio - Mat. M63/0605
+\and Andrea Scognamiglio - Mat. M63/0598
+\and Stefano Sorrentino - Mat. M63/0630}
+\title{Elaborato Finale - Task 2 \\ Gruppo 3}
+
+\begin{document}
+\frontmatter
+\maketitle
+\tableofcontents
+\setcounter{page}{1}
+\mainmatter
+\chapter*{Task 2}
+Il task prevede la realizzazione di due \textit{IPcore}, ciascuno dei quali andrà a comporre parte dell'architettura di un progetto che prevede la realizzazione di un \textbf{radar bistabile passivo}. 
+
+In questo documento verranno illustrati i concetti fondamentali e le decisioni di progetto che hanno portato alla realizzazione degli artefatti finali, per approfondimenti si rimanda alla documentazione interna e al codice sorgente allegati. 
+
+\chapter{IPcore 1}
+\section{Architettura}
+
+\chapter{IPcore 2}
+Le specifiche per questo componente prescrivono la realizzazione di un \textit{IPcore} che calcolasse, dato un un insieme di campioni, il massimo valore. I campioni sono espressi come dei valori complessi, formati da parte reale ed immaginaria, i quali devono essere preventivamente elaborati calcolandone il modulo. Il massimo verrà calcolato sui moduli di questi campioni. Il componente deve fornire in uscita il campione (inteso come valore complesso) massimo, oltre alle informazioni relative a spiazzamento nella frequenza doppler, frequenza doppler e satellite ai quali appartiene il campione.
+
+\begin{figure}[hb]
+\begin{center}
+\includegraphics[scale=0.6, keepaspectratio]{immagini/ipcore2_toplevel}
+\caption{IPcore 2 ad alto livello}
+\label{ipcore2_top}
+\end{center}
+\end{figure}
+\clearpage
+
+\section{Design}
+Durante la fase di progettazione si è optato per un approccio realizzativo totalmente \textbf{hardware}. Questa scelta consente di ottenere alta efficienza, in termini temporali, nello svolgimento delle operazioni, che possono essere eseguite anche in parallelo (con i dovuti accorgimenti). 
+
+La scelta di un approccio ibrido o totalmente software non è stata presa in considerazione a causa dell'inefficienza temporale che si può avere introducendo un processore, il quale può non essere ottimizzato per l'applicazione in questione. Sebbene questa motivazione può non sembrare tanto ovvia per il blocco di calcolo del modulo, sicuramente lo è per il blocco che calcola il massimo.
+
+Altra linea guida seguita durante il design è stato il \textbf{riuso}. Qualora possibile, lo sviluppo si è concentrato sul riutilizzo di componenti già presenti e funzionanti, che siano prodotti propri o di terzi.
+\section{Architettura}
+L'\textit{IPcore} è stato realizzato mediante un approccio \textbf{modulare} per dominare la complessità e facilitare le operazioni di testing.
+
+L'architettura del modulo top-level pertanto è composta da due parti: \textit{complex\_abs} che realizza l'operazione di modulo e \textit{compute\_max} che realizza l'operazione di calcolo del massimo.
+
+%%%%%TODO: FIGURA DELLO SCHEMATICO DI COMPLEX_MAX
+%\begin{figure}[hb]
+%\begin{center}
+%\includegraphics[scale=0.5, keepaspectratio]{immagini/complexmax_schemablocchi}
+%\caption{Schema a blocchi di \textit{complex\_max}}
+%\label{complexmax_top}
+%\end{center}
+%\end{figure}
+%\clearpage
+
+\subsection{Calcolo del modulo}
+Il componente realizza l'operazione di modulo di un numero complesso secondo la seguente formula:
+$$
+\abs{z} = \sqrt{x^{2}+y^{2}}
+$$
+dove \textit{x} e \textit{y} sono, rispettivamente, parte reale e immaginaria del numero complesso \textit{z}.
+
+Siccome le uscite di questo blocco concorrono soltanto al calcolo del massimo e non sono utili ai fini dell'applicazione, si è deciso di escludere il blocco di radice quadrata. Questa operazione è possibile in virtù del fatto che la relazione di \textit{monotonicità} si conserva indipendentemente dall'operazione di radice, pertanto è possibile calcolare il massimo senza necessariamente implementare tutta l'operazione di modulo. Sebbene questa scelta porti a dover gestire un parallelismo di bit superiore (il parallelismo dei dati di uscita è quello dei moltiplicatori e non più della radice), il compromesso diventa accettabile in virtù della disponibilità di area sul silicio.
+\subsubsection{Architettura}
+L'architettura è composta da due moltiplicatori di \textit{Booth} che calcolano, rispettivamente, il quadrato di parte reale e parte immaginaria del campione in ingresso e da un sommatore \textit{ripple-carry} che somma i risultati dei moltiplicatori.
+
+\begin{figure}[hb]
+\begin{center}
+\includegraphics[scale=0.5, keepaspectratio]{immagini/complexabs_schemablocchi}
+\caption{Schema a blocchi per \textit{complex\_abs}}
+\label{complexabs_schemablocchi}
+\end{center}
+\end{figure}
+
+Il componente è dotato inoltre di un'unità di controllo alla quale è demandato il pilotaggio dei segnali di abilitazione dei moltiplicatori, del loro reset. %oltre che dei segnali di protocollo che sono necessari al blocco per comunicare la \textbf{disponibilità} a ricevere dati (\textit{data\_rdy}) e per comunicare la \textbf{validità} dei dati in uscita (\textit{data\_valid}).
+
+%%%%%TODO: FIGURA DELLO SCHEMATICO DELL'FSM DI COMPLEX_ABS
+%\begin{figure}[hb]
+%\begin{center}
+%\includegraphics[scale=0.5, keepaspectratio]{immagini/complexabs_fsm}
+%\caption{Automa a stati per il blocco \textit{complex\_abs}}
+%\label{complexabs_fsm}
+%\end{center}
+%\end{figure}
+%\clearpage
+
+%\ref{complexabs\_fsm}
+Dalla \figurename~, si può notare la presenza dello stato ADD. Questo stato non comporta nessuna operazione da parte dell'automa se non quella di attendere un periodo di clock necessario al sommatore per completare l'operazione di somma (il sommatore \textit{ripple\_carry} è implementato come macchina combinatoria non pipelined).
+\clearpage
+\subsection{Calcolo del massimo}
+Il componente realizza l'operazione di calcolo del massimo per un insieme di campioni di dimensione $s*d*c$, dove \textit{s} rappresenta il numero di satelliti da analizzare, \textit{d} il numero di intervalli di frequenze doppler per ciascun satellite e \textit{c} rappresenta il numero di campioni per ciascun intervallo doppler. Il massimo viene calcolato sui moduli dei campioni, a loro volta ottenuti dal blocco \textit{complex\_abs}. 
+
+Il componente restituisce in uscita il valore complesso e il modulo del campione massimo oltre alle sue coordinate nell'insieme di campioni, ovvero l'indice di spiazzamento nella frequenza doppler, la frequenza doppler e il satellite ai quali appartiene.
+
+A causa della complessità del componente si è optato per uno sviluppo \textbf{incrementale}: partendo da una descrizione comportamentale, utilizzata per la verifica funzionale, si è poi passati al raffinamento di quest'ultima per individuare i componenti fondamentali e generare un'architettura che descrivesse in maniera essenziale il blocco come insieme di elementi di base. 
+
+% calcolo massimo on line e non offline!!
+\subsubsection{Architettura behavioral}
+Questa architettura è stata sviluppata con l'intento di ottenere velocemente un \textbf{prototipo} del componente, in modo da permettere un testing che consentisse di verificare la correttezza funzionale.
+
+Sostanzialmente il funzionamento del componente è stato sintetizzato a due processi che svolgono compiti ben precisi: uno che elabora il valore dei conteggi e l'altro che effettua i confronti necessari al calcolo del massimo. Per approfondimenti riguardanti le singole fasi dell'algoritmo si rimanda al codice sorgente opportunamente commentato.
+
+% DESCRIVERE PROBLEMA KE NN PUOI LEGGERE IL VALORE AGGIORNATO DI UN SEGNALE CHE HAI APPENA SCRITTO
+
+\subsubsection{Architettura strutturale}
+Essenzialmente l'architettura è caratterizzata da tre \textit{contatori modulo n}, un \textit{comparatore} e cinque \textit{registri}. I contatori servono a realizzare il ciclo di $s*d*c$ iterazioni attraverso una configurazione a cascata. I registri sono necessari per memorizzare le informazioni relative al massimo campione, ovvero il modulo, il valore complesso, lo spiazzamento all'interno della frequenza doppler, l'intervallo doppler e il satellite. Infine il comparatore è necessario per confrontare il campione i-esimo con il massimo. Nella \figurename~ è possibile osservare come i componenti siano collegati tra loro.
+%\ref{computemax_schema}
+
+%%%%%TODO: FIGURA DELLO SCHEMATICO DI COMPUTE_MAX
+%\begin{figure}[hb]
+%\begin{center}
+%\includegraphics[scale=0.5, keepaspectratio]{immagini/computemax_schemablocchi}
+%\caption{Schema a blocchi di \textit{compute\_max}}
+%\label{computemax_schema}
+%\end{center}
+%\end{figure}
+
+Ad ogni iterazione, il modulo del campione i-esimo viene confrontato con l'attuale valore massimo mediante il comparatore. Il massimo viene aggiornato solo nel caso in cui il modulo del campione i-esimo sia maggiore dell'attuale modulo massimo. In tal caso, il comparatore asserisce un segnale che va ad abilitare il caricamento di tutti i registri con le informazioni relative al nuovo campione massimo.
+
+Un'ultima considerazione riguarda le problematiche che sono sorte durante lo sviluppo di questa versione, che hanno portato all'introduzione di ulteriori elementi. Questi problemi sono tipici dello sviluppo per componenti, per questo non sono stati riscontrati durante lo sviluppo della versione comportamentale. \\
+Due ulteriori registri, \textit{reg\_sample\_abs} e \textit{reg\_sample}, sono stati aggiunti con l'intento di \textbf{ritardare} la variazione del segnale di ingresso. Questo accorgimento è necessario per mantenere stabile il segnale del dato, proveniente dall'esterno, per un tempo tale da consentire ai registri interni di campionare il dato corretto sulla linea di ingresso, nel caso di aggiornamento del massimo.\\
+Per un motivo analogo sono stati introdotti dei \textit{flip-flop}, ovvero per ritardare il segnale di caricamento dei registri della doppler e del satellite all'atto dell'aggiornamento del massimo. Questo accorgimento è necessario per consentire ai rispettivi contatori di commutare e consentire ai registri di memorizzare l'indice corretto. Il segnale di caricamento del registro satellite, inoltre, deve tenere in conto di tre ritardi: uno introdotto dal contatore delle doppler, uno introdotto dal componente \textit{livelli2impulsi} e un altro ancora dal contatore dei satelliti. Ovviamente questi segnali potrebbero essere gestiti da un'automa a stati finiti ma si è optato per una soluzione del genere per evitare di complicare il design.\\
+Un blocco \textit{livelli2impulsi} è posto tra i contatori delle doppler e dei satelliti per rendere il segnale a livelli \textit{count\_hit} un segnale impulsivo. Questo accorgimento è necessario per evitare che il contatore dei satelliti sia abilitato al conteggio per più di una volta, cosa che potrebbe capitare quando sono terminate le frequenze doppler per un dato satellite (in tal caso il contatore avrebbe raggiunto il massimo conteggio e asserirebbe \textit{count\_hit} fino alla prossima abilitazione al conteggio).\\
+
+\chapter{Driver}
+
+\end{document}

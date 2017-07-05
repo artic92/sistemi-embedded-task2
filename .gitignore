@@ -1,3 +1,11 @@
+# Latex doc
+*.synctex.gz
+*.aux
+*.out
+*.toc
+*.pdf
+*.log
+
 # Path documentazione
 doc/vhdl_ipcore2
 
