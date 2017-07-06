@@ -483,3 +483,279 @@ port map (
 );
 
 end Structural;
+
+architecture Structural_non_continous of compute_max is
+
+--! @brief Registro a parallelismo generico che opera sul fronte di salita del clock
+component register_n_bit
+generic (
+  n     : natural := 8
+);
+port (
+  I       : in  STD_LOGIC_VECTOR (n-1 downto 0);
+  clock   : in  STD_LOGIC;
+  load    : in  STD_LOGIC;
+  reset_n : in  STD_LOGIC;
+  O       : out STD_LOGIC_VECTOR (n-1 downto 0)
+);
+end component register_n_bit;
+
+--! @brief Contatore modulo-n di tipo up-down con caricamento del valore di conteggio e
+--!   segnali di uscita indicanti valore e fine del conteggio
+component counter_modulo_n
+generic (
+  n : natural := 16
+);
+port (
+  clock          : in  STD_LOGIC;
+  count_en       : in  STD_LOGIC;
+  reset_n        : in  STD_LOGIC;
+  up_down        : in  STD_LOGIC;
+  load_conteggio : in  STD_LOGIC;
+  conteggio_in   : in  STD_LOGIC_VECTOR (natural(ceil(log2(real(n))))-1 downto 0);
+  conteggio_out  : out STD_LOGIC_VECTOR ((natural(ceil(log2(real(n)))))-1 downto 0);
+  count_hit      : out STD_LOGIC
+);
+end component counter_modulo_n;
+
+--! @brief Comparatore a parallelismo generico che verifica la relazione di maggioranza tra i due input
+component comparatore
+generic (
+  width : natural := 31
+);
+port (
+  enable   : in  STD_LOGIC;
+  A        : in  STD_LOGIC_VECTOR (31 downto 0);
+  B        : in  STD_LOGIC_VECTOR (31 downto 0);
+  AbiggerB : out STD_LOGIC
+);
+end component comparatore;
+
+--! @brief Automa a stati per la generazione di un segnale impulsivo a partire da uno a livelli
+component livelli2impulsi
+port (
+  input  : in  STD_LOGIC;
+  clock  : in  STD_LOGIC;
+  output : out STD_LOGIC
+);
+end component livelli2impulsi;
+
+--! @brief Flip-flop D con reset 0-attivo asincrono
+component d_edge_triggered
+port (
+  data_in  : in  STD_LOGIC;
+  reset_n  : in  STD_LOGIC;
+  clock    : in  STD_LOGIC;
+  data_out : out STD_LOGIC
+);
+end component d_edge_triggered;
+
+--! Segnale di uscita del contatore dei campioni (collegato alla linea dato del registro che memorizza la posizione del campione massimo)
+signal contatore_campione_out : STD_LOGIC_VECTOR (natural(ceil(log2(real(c))))-1 downto 0);
+--! Segnale di uscita del contatore degli intervalli doppler (collegato alla linea dato del registro che memorizza la doppler associata al massimo)
+signal contatore_doppler_out : STD_LOGIC_VECTOR (natural(ceil(log2(real(d))))-1 downto 0);
+--! Segnale di uscita del contatore dei satelliti (collegato alla linea dato del registro che memorizza il satellite associato al massimo)
+signal contatore_satellite_out : STD_LOGIC_VECTOR (natural(ceil(log2(real(s))))-1 downto 0);
+
+signal max_sig, sample_abs_sig, sample_sig : STD_LOGIC_VECTOR(sample_width-1 downto 0);
+signal comparatore_out, enable_count_campioni, enable_count_doppler_livelli, enable_count_doppler_impulsi, enable_count_satellite_livelli, enable_count_satellite_impulsi, load_register_doppler_delayed, load_register_doppler_delayed2, load_register_satellite_delayed, load_register_satellite_delayed2 : STD_LOGIC;
+
+begin
+
+enable_count_campioni <= enable;
+max <= max_sig;
+
+--! Contatore dei campioni di un intervallo doppler
+counter_campioni : counter_modulo_n
+generic map (
+  n => c
+)
+port map (
+  clock          => clock,
+  count_en       => enable_count_campioni,
+  reset_n        => reset_n,
+  up_down        => '0',
+  load_conteggio => '0',
+  conteggio_in   => (others => '0'),
+  conteggio_out  => contatore_campione_out,
+  count_hit      => enable_count_doppler_livelli
+);
+
+enable_count_doppler_impulsivo : livelli2impulsi
+port map (
+  input  => enable_count_doppler_livelli,
+  clock  => clock,
+  output => enable_count_doppler_impulsi
+);
+
+--! Registro che memorizza la posizione del massimo nell'intervallo doppler
+register_campione : register_n_bit
+generic map (
+  n     => natural(ceil(log2(real(c))))
+)
+port map (
+  I       => contatore_campione_out,
+  clock   => clock,
+  load    => comparatore_out,
+  reset_n => reset_n,
+  O       => pos_campione
+);
+
+--! Contatore delle frequenze doppler relative ad un satellite
+counter_doppler : counter_modulo_n
+generic map (
+  n => d
+)
+port map (
+  clock          => clock,
+  count_en       => enable_count_doppler_impulsi,
+  reset_n        => reset_n,
+  up_down        => '0',
+  load_conteggio => '0',
+  conteggio_in   => (others => '0'),
+  conteggio_out  => contatore_doppler_out,
+  count_hit      => enable_count_satellite_livelli
+);
+
+--! @brief Ritardo imposto al segnale di caricamento del registro doppler
+--! @details Questo flip-flop è necessario per consentire il caricamento del valore corretto
+--!    di conteggio nel registro doppler solo dopo che il contatore abbia commutato la
+--!    propria uscita (problema che si pone in corrispondenza del primo campione di
+--!    una nuova frame)
+ff_load_doppler : d_edge_triggered
+port map (
+  data_in  => comparatore_out,
+  reset_n  => reset_n,
+  clock    => clock,
+  data_out => load_register_doppler_delayed
+);
+
+ff_load_doppler2 : d_edge_triggered
+port map (
+  data_in  => load_register_doppler_delayed,
+  reset_n  => reset_n,
+  clock    => clock,
+  data_out => load_register_doppler_delayed2
+);
+
+--! Registro che memorizza l'intervallo di frequenza doppler associato al campione massimo
+register_doppler : register_n_bit
+generic map (
+ n     => natural(ceil(log2(real(d))))
+)
+port map (
+  I       => contatore_doppler_out,
+  clock   => clock,
+  load    => load_register_doppler_delayed2,
+  reset_n => reset_n,
+  O       => pos_doppler
+);
+
+--! @brief Automa a stati per la gestione del segnale di count_hit
+--! @details Questo automa è necessario per convertire il segnale di count_hit del contatore doppler
+--!   in un segnale impulsivo che va ad abilitare il contatore dei satelliti per un solo conteggio. Senza questo
+--!   componente il contatore dei satelliti sarebbe abilitato a contare per più di un valore.
+enable_count_satellite_impulsivo : livelli2impulsi
+port map (
+  input  => enable_count_satellite_livelli,
+  clock  => clock,
+  output => enable_count_satellite_impulsi
+);
+
+--! Contatore dei satelliti
+counter_satelliti : counter_modulo_n
+generic map (
+  n => s
+)
+port map (
+  clock          => clock,
+  count_en       => enable_count_satellite_impulsi,
+  reset_n        => reset_n,
+  up_down        => '0',
+  load_conteggio => '0',
+  conteggio_in   => (others => '0'),
+  conteggio_out  => contatore_satellite_out,
+  count_hit      => done
+);
+
+--! @brief Ritardo imposto al segnale di caricamento del registro satellite
+--! @details Questo flip-flop è necessario per consentire il caricamento del valore corretto
+--!    di conteggio nel registro satellite solo dopo che il contatore abbia commutato la
+--!    propria uscita (problema che si pone in corrispondenza dell'ultimo campione di
+--!    un satellite)
+ff_load_satellite : d_edge_triggered
+port map (
+  data_in  => load_register_doppler_delayed,
+  reset_n  => reset_n,
+  clock    => clock,
+  data_out => load_register_satellite_delayed
+);
+
+--! @brief Secondo ritardo imposto al segnale di caricamento del registro satellite
+--! @details Questo secondo ritardo tiene in conto anche dell'ulteriore ritardo inposto
+--!   contatore delle doppler
+ff_load_satellite2 : d_edge_triggered
+port map (
+  data_in  => load_register_satellite_delayed,
+  reset_n  => reset_n,
+  clock    => clock,
+  data_out => load_register_satellite_delayed2
+);
+
+--! Registro che memorizza il satellite associato al campione massimo
+register_satellite : register_n_bit
+generic map (
+  n     => natural(ceil(log2(real(s))))
+)
+port map (
+  I       => contatore_satellite_out,
+  clock   => clock,
+  load    => load_register_satellite_delayed2,
+  reset_n => reset_n,
+  O       => pos_satellite
+);
+
+
+sample_abs_sig <= sample_abs;
+
+--! Registro che memorizza il modulo associato al campione massimo
+register_max : register_n_bit
+generic map (
+  n     => sample_width
+)
+port map (
+  I       => sample_abs_sig,
+  clock   => clock,
+  load    => comparatore_out,
+  reset_n => reset_n,
+  O       => max_sig
+);
+
+sample_sig <= sample;
+
+--! Registro che memorizza il valore complesso associato al campione massimo
+register_sample_max : register_n_bit
+generic map (
+  n     => sample_width
+)
+port map (
+  I       => sample_sig,
+  clock   => clock,
+  load    => comparatore_out,
+  reset_n => reset_n,
+  O       => sample_max
+);
+
+--! Comparatore necessario a comparare il campione in ingresso con il massimo
+comparatore_i : comparatore
+generic map (
+  width => sample_width
+)
+port map (
+  enable   => enable,
+  A        => sample_abs,
+  B        => max_sig,
+  AbiggerB => comparatore_out
+);
+
+end Structural_non_continous;
