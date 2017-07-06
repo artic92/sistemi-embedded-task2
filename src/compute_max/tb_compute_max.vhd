@@ -51,6 +51,7 @@ ARCHITECTURE behavior OF tb_compute_max IS
     PORT(
          clock : IN  std_logic;
          reset_n : IN  std_logic;
+         enable : IN std_logic;
          sample_abs : IN  std_logic_vector(sample_width-1 downto 0);
 			   sample : IN std_logic_vector(sample_width-1 downto 0);
          pos_campione : OUT std_logic_vector(natural(ceil(log2(real(c))))-1 downto 0);
@@ -62,7 +63,7 @@ ARCHITECTURE behavior OF tb_compute_max IS
         );
     END COMPONENT;
 
-   	--for all : compute_max use entity work.compute_max(Behavioral);
+--   	for all : compute_max use entity work.compute_max(Behavioral);
     	for all : compute_max use entity work.compute_max(Structural);
 
 	constant sample_width : natural:= 32;
@@ -73,6 +74,7 @@ ARCHITECTURE behavior OF tb_compute_max IS
    --Inputs
    signal clock : std_logic := '0';
    signal reset_n : std_logic := '0';
+   signal enable : std_logic := '0';
    signal sample_abs : std_logic_vector(sample_width-1 downto 0) := (others => '0');
 	 signal sample : std_logic_vector(sample_width-1 downto 0) := (others => '0');
 
@@ -100,6 +102,7 @@ BEGIN
    PORT MAP (
           clock => clock,
           reset_n => reset_n,
+          enable => enable,
           sample_abs => sample_abs,
 			    pos_campione => pos_campione,
 			    sample => sample,
@@ -129,13 +132,15 @@ BEGIN
       wait for clock_period*10;
 
       -- insert stimulus here
-  		wait for 5 ns;
+		reset_n <= '1';
+  		wait for clock_period;
+		wait for 5 ns;
 
   		sample <= x"00010001";
       -- TEST CASE: primo in assoluto (0,0,0,0x00010001)
       --sample_abs <= x"00000050";
   		sample_abs <= x"00000002";
-  		reset_n <= '1';
+		enable <= '1';
   		wait for clock_period;
 
   		sample <= sample + 65537;

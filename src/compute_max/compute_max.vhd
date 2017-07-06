@@ -47,6 +47,7 @@ entity compute_max is
               c : natural := 3);            --! Numero di campioni per intervallo doppler
     Port ( clock : in  STD_LOGIC;           --! Segnale di temporizzazione
            reset_n : in  STD_LOGIC;         --! Segnale di reset 0-attivo
+           enable : in STD_LOGIC;
            sample_abs : in  STD_LOGIC_VECTOR (sample_width-1 downto 0);                   --! Modulo del campione
            sample : in STD_LOGIC_VECTOR(sample_width-1 downto 0);                         --! Valore complesso del campione associato al modulo
            pos_campione : out STD_LOGIC_VECTOR(natural(ceil(log2(real(c))))-1 downto 0);  --! Posizione del massimo nell'intervallo doppler
@@ -95,7 +96,7 @@ begin
     cont_satelliti <= (others => '0');
     done <= '0';
 
-    elsif (rising_edge(clock)) then
+  elsif (rising_edge(clock) and enable = '1') then
 
     -- Se il campione appena arrivato appartiene allo stesso intervallo di frequenze
     -- doppler del campione precedente
@@ -149,7 +150,7 @@ begin
     sample_sig <= (others => '0');
     max_satellite <= (others => '0');
 
-    elsif (rising_edge(clock)) then
+  elsif (rising_edge(clock) and enable = '1') then
 
       -- Confronta il campione appena arrivato con l'attuale max_satellite (valore massimo)
       if(sample_abs > max_satellite) then
@@ -241,6 +242,7 @@ generic (
   width : natural := 31
 );
 port (
+  enable   : in  STD_LOGIC;
   A        : in  STD_LOGIC_VECTOR (31 downto 0);
   B        : in  STD_LOGIC_VECTOR (31 downto 0);
   AbiggerB : out STD_LOGIC
@@ -278,7 +280,7 @@ signal comparatore_out, enable_count_campioni, enable_count_doppler, enable_coun
 
 begin
 
-enable_count_campioni <= reset_n;
+enable_count_campioni <= enable;
 max <= max_sig;
 
 --! Contatore dei campioni di un intervallo doppler
@@ -474,6 +476,7 @@ generic map (
   width => sample_width
 )
 port map (
+  enable   => enable,
   A        => sample_abs,
   B        => max_sig,
   AbiggerB => comparatore_out
