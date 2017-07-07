@@ -131,8 +131,8 @@ port map (
 );
 
 --! @brief Memorizza il modulo del numero complesso in ingresso
---! @details Questo registro consente il calcolo di un nuovo modulo senza attendere che
---!   il blocco a valle sia pronto a ricevere il risultato una volta pronto.
+--! @details Questo registro è necessario per memorizzare il risultato di complex_abs
+--!   dato che il componente si resetta dopo che ha terminato l'elaborazione.
 reg_abs_value: register_n_bit
 generic map (
   n => complex_width

@@ -111,21 +111,21 @@ begin
  start <= '0';
  reset_n_all <= '1';
 
- case current_state is
-     when reset =>
-                  reset_n_all <= '0';
-     when waiting_for_valid_in =>
-                                ready_out <= '1';
-     when elaboration =>
-                        start <= '1';
-      when waiting_1 =>
-      when waiting_2 =>
-      when waiting_3 =>
-      when waiting_4 =>
-      when done =>
-     when waiting_for_ready_in =>
-                                  valid_out <= '1';
-     end case;
+case current_state is
+   when reset =>
+                reset_n_all <= '0';
+   when waiting_for_valid_in =>
+                              ready_out <= '1';
+   when elaboration =>
+                      start <= '1';
+   when waiting_1 =>
+   when waiting_2 =>
+   when waiting_3 =>
+   when waiting_4 =>
+   when done =>
+   when waiting_for_ready_in =>
+                                valid_out <= '1';
+   end case;
 end process;
 
 
