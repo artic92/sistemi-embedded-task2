@@ -46,43 +46,54 @@ signal current_state, next_state : state := reset;
 
 begin
 
-  registro_stato : process(clock, reset_n)
-  begin
-  	if(reset_n = '0') then
-  		current_state <= reset;
-  	elsif(clock = '1' and clock'event) then
-  		current_state <= next_state;
-  	end if;
-  end process;
+registro_stato : process(clock, reset_n)
+begin
+	if(reset_n = '0') then
+		current_state <= reset;
+	elsif(clock = '1' and clock'event) then
+		current_state <= next_state;
+	end if;
+end process;
 
-  fsm : process(current_state, reset_n, done_mul, enable)
-  begin
+fsm_next_state : process(current_state, reset_n, done_mul, enable)
+begin
 
-  	enable_mul <= '0';
-    reset_n_all <= '1';
-    done <= '0';
+	case current_state is
+		when reset =>
+										if(enable = '1') then
+											next_state <= waiting_mul;
+										else
+											next_state <= reset;
+										end if;
+		when waiting_mul =>
+                        if(done_mul = '1') then
+                          next_state <= add;
+                        else
+                          next_state <= waiting_mul;
+                        end if;
+    when add =>
+                  next_state <= op_done;
+    when op_done =>
+                  next_state <= reset;
+	end case;
+end process;
 
-  	case current_state is
-  		when reset =>
-                      reset_n_all <= '0';
-  										if(enable = '1') then
-  											next_state <= waiting_mul;
-  										else
-  											next_state <= reset;
-  										end if;
-  		when waiting_mul =>
-                          enable_mul <= '1';
-                          if(done_mul = '1') then
-                            next_state <= add;
-                          else
-                            next_state <= waiting_mul;
-                          end if;
-      when add =>
-                    next_state <= op_done;
-      when op_done =>
+fsm_output : process(current_state)
+begin
+  enable_mul <= '0';
+  reset_n_all <= '1';
+  done <= '0';
+
+  case current_state is
+    when reset =>
+                    reset_n_all <= '0';
+    when waiting_mul =>
+                        enable_mul <= '1';
+    when add =>
+    when op_done =>
                     done <= '1';
-                    next_state <= reset;
-  	end case;
-  end process;
+  end case;
+
+end process;
 
 end Behavioral;
