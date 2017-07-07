@@ -118,18 +118,16 @@ L'architettura è composta da due moltiplicatori di \textit{Booth} che calcolano
 
 Il componente è dotato inoltre di un'unità di controllo alla quale è demandato il pilotaggio dei segnali di abilitazione dei moltiplicatori e del loro reset. 
 
-%%%%%TODO: FIGURA DELLO SCHEMATICO DELL'FSM DI COMPLEX_ABS
-%\begin{figure}[hb]
-%\begin{center}
-%\includegraphics[scale=0.5, keepaspectratio]{immagini/complexabs_fsm}
-%\caption{Automa a stati per il blocco \textit{complex\_abs}}
-%\label{complexabs_fsm}
-%\end{center}
-%\end{figure}
-%\clearpage
+\begin{figure}[hb]
+\begin{center}
+\includegraphics[width=\linewidth, keepaspectratio]{immagini/complexabs_fsm}
+\caption{Automa a stati per il blocco \textit{complex\_abs}}
+\label{complexabs_fsm}
+\end{center}
+\end{figure}
+\clearpage
 
-%\ref{complexabs\_fsm}
-Dalla \figurename~, si può notare la presenza dello stato ADD. Questo stato non comporta nessuna operazione da parte dell'automa se non quella di attendere un periodo di clock necessario al sommatore per completare l'operazione di somma (il sommatore \textit{ripple\_carry} è implementato come macchina combinatoria non pipelined).
+Dalla \figurename~\ref{complexabs_fsm}, si può notare la presenza dello stato ADD. Questo stato non comporta nessuna operazione da parte dell'automa se non quella di attendere un periodo di clock necessario al sommatore per completare l'operazione di somma (il sommatore \textit{ripple\_carry} è implementato come macchina combinatoria non pipelined).
 \clearpage
 \subsection{Calcolo del massimo}
 Il componente realizza l'operazione di calcolo del massimo per un insieme di campioni di dimensione $s*d*c$, dove \textit{s} rappresenta il numero di satelliti da analizzare, \textit{d} il numero di intervalli di frequenze doppler per ciascun satellite e \textit{c} rappresenta il numero di campioni per ciascun intervallo doppler. Il massimo viene calcolato sui moduli dei campioni, a loro volta ottenuti dal blocco \textit{complex\_abs}.\\
