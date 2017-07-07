@@ -1,4 +1,4 @@
-# Latex doc
+# Latex
 *.synctex.gz
 *.aux
 *.out
@@ -11,6 +11,9 @@ doc/vhdl_ipcore2
 
 # Macos files
 .DS_*
+
+# Backup files
+.~*
 
 # Prerequisites
 *.d

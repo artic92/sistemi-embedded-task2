@@ -116,7 +116,7 @@ L'architettura è composta da due moltiplicatori di \textit{Booth} che calcolano
 \end{center}
 \end{figure}
 
-Il componente è dotato inoltre di un'unità di controllo alla quale è demandato il pilotaggio dei segnali di abilitazione dei moltiplicatori, del loro reset. %oltre che dei segnali di protocollo che sono necessari al blocco per comunicare la \textbf{disponibilità} a ricevere dati (\textit{data\_rdy}) e per comunicare la \textbf{validità} dei dati in uscita (\textit{data\_valid}).
+Il componente è dotato inoltre di un'unità di controllo alla quale è demandato il pilotaggio dei segnali di abilitazione dei moltiplicatori e del loro reset. 
 
 %%%%%TODO: FIGURA DELLO SCHEMATICO DELL'FSM DI COMPLEX_ABS
 %\begin{figure}[hb]
@@ -132,13 +132,13 @@ Il componente è dotato inoltre di un'unità di controllo alla quale è demandat
 Dalla \figurename~, si può notare la presenza dello stato ADD. Questo stato non comporta nessuna operazione da parte dell'automa se non quella di attendere un periodo di clock necessario al sommatore per completare l'operazione di somma (il sommatore \textit{ripple\_carry} è implementato come macchina combinatoria non pipelined).
 \clearpage
 \subsection{Calcolo del massimo}
-Il componente realizza l'operazione di calcolo del massimo per un insieme di campioni di dimensione $s*d*c$, dove \textit{s} rappresenta il numero di satelliti da analizzare, \textit{d} il numero di intervalli di frequenze doppler per ciascun satellite e \textit{c} rappresenta il numero di campioni per ciascun intervallo doppler. Il massimo viene calcolato sui moduli dei campioni, a loro volta ottenuti dal blocco \textit{complex\_abs}. 
+Il componente realizza l'operazione di calcolo del massimo per un insieme di campioni di dimensione $s*d*c$, dove \textit{s} rappresenta il numero di satelliti da analizzare, \textit{d} il numero di intervalli di frequenze doppler per ciascun satellite e \textit{c} rappresenta il numero di campioni per ciascun intervallo doppler. Il massimo viene calcolato sui moduli dei campioni, a loro volta ottenuti dal blocco \textit{complex\_abs}.\\
+Per ottimizzare in risorse e tempo lo sviluppo del componente si è incentrato su di una soluzione di calcolo \textbf{dinamico} del massimo: ovvero, ad ogni iterazione, il massimo viene confrontato con il campione in ingresso e aggiornato direttamente. In questo modo si ha la necessità di salvare solo i dati relativi al massimo con conseguente ottimizzazione delle risorse di memoria.
 
 Il componente restituisce in uscita il valore complesso e il modulo del campione massimo oltre alle sue coordinate nell'insieme di campioni, ovvero l'indice di spiazzamento nella frequenza doppler, la frequenza doppler e il satellite ai quali appartiene.
 
-A causa della complessità del componente si è optato per uno sviluppo \textbf{incrementale}: partendo da una descrizione comportamentale, utilizzata per la verifica funzionale, si è poi passati al raffinamento di quest'ultima per individuare i componenti fondamentali e generare un'architettura che descrivesse in maniera essenziale il blocco come insieme di elementi di base. 
+A causa della complessità del componente si è optato per uno sviluppo \textbf{incrementale}: partendo da una descrizione comportamentale, utilizzata per la verifica funzionale, si è poi passati al raffinamento di quest'ultima per individuare i componenti fondamentali e generare un'architettura che descrivesse il blocco come insieme di questi elementi. 
 
-% calcolo massimo on line e non offline!!
 \subsubsection{Architettura behavioral}
 Questa architettura è stata sviluppata con l'intento di ottenere velocemente un \textbf{prototipo} del componente, in modo da permettere un testing che consentisse di verificare la correttezza funzionale.
 
@@ -161,10 +161,39 @@ Essenzialmente l'architettura è caratterizzata da tre \textit{contatori modulo 
 
 Ad ogni iterazione, il modulo del campione i-esimo viene confrontato con l'attuale valore massimo mediante il comparatore. Il massimo viene aggiornato solo nel caso in cui il modulo del campione i-esimo sia maggiore dell'attuale modulo massimo. In tal caso, il comparatore asserisce un segnale che va ad abilitare il caricamento di tutti i registri con le informazioni relative al nuovo campione massimo.
 
-Un'ultima considerazione riguarda le problematiche che sono sorte durante lo sviluppo di questa versione, che hanno portato all'introduzione di ulteriori elementi. Questi problemi sono tipici dello sviluppo per componenti, per questo non sono stati riscontrati durante lo sviluppo della versione comportamentale. \\
+Durante lo sviluppo di questa versione sono sorte diverse problematiche, che hanno portato all'introduzione di ulteriori elementi. Questi problemi sono tipici dello sviluppo per componenti, per questo non sono stati riscontrati durante lo sviluppo della versione comportamentale. \\
 Due ulteriori registri, \textit{reg\_sample\_abs} e \textit{reg\_sample}, sono stati aggiunti con l'intento di \textbf{ritardare} la variazione del segnale di ingresso. Questo accorgimento è necessario per mantenere stabile il segnale del dato, proveniente dall'esterno, per un tempo tale da consentire ai registri interni di campionare il dato corretto sulla linea di ingresso, nel caso di aggiornamento del massimo.\\
 Per un motivo analogo sono stati introdotti dei \textit{flip-flop}, ovvero per ritardare il segnale di caricamento dei registri della doppler e del satellite all'atto dell'aggiornamento del massimo. Questo accorgimento è necessario per consentire ai rispettivi contatori di commutare e consentire ai registri di memorizzare l'indice corretto. Il segnale di caricamento del registro satellite, inoltre, deve tenere in conto di tre ritardi: uno introdotto dal contatore delle doppler, uno introdotto dal componente \textit{livelli2impulsi} e un altro ancora dal contatore dei satelliti. Ovviamente questi segnali potrebbero essere gestiti da un'automa a stati finiti ma si è optato per una soluzione del genere per evitare di complicare il design.\\
-Un blocco \textit{livelli2impulsi} è posto tra i contatori delle doppler e dei satelliti per rendere il segnale a livelli \textit{count\_hit} un segnale impulsivo. Questo accorgimento è necessario per evitare che il contatore dei satelliti sia abilitato al conteggio per più di una volta, cosa che potrebbe capitare quando sono terminate le frequenze doppler per un dato satellite (in tal caso il contatore avrebbe raggiunto il massimo conteggio e asserirebbe \textit{count\_hit} fino alla prossima abilitazione al conteggio).\\
+Un blocco \textit{livelli2impulsi} è posto tra i contatori delle doppler e dei satelliti per rendere il segnale a livelli \textit{count\_hit} un segnale impulsivo. Questo accorgimento è necessario per evitare che il contatore dei satelliti sia abilitato al conteggio per più di una volta, cosa che potrebbe capitare quando sono terminate le frequenze doppler per un dato satellite (in tal caso il contatore avrebbe raggiunto il massimo conteggio e asserirebbe \textit{count\_hit} fino alla prossima abilitazione al conteggio, che avverrebbe solo alla fine della prossima frame).\\
+\clearpage
+\subsection{Collegamento dei blocchi}
+Durante la fase di collegamento dei blocchi appena descritti sono sorti svariati problemi di sincronizzazione derivanti dal fatto che i blocchi avessero tempi di calcolo differenti. 
+
+Una prima soluzione è stata quella di utilizzare frequenze di clock diverse per ciascun blocco, ovvero modellando la frequenza di clock del blocco \textit{compute\_max} con un periodo che tenesse in conto del ritardo del blocco \textit{complex\_abs}, ma questa soluzione è stata abbandonata per la difficoltà di definire in maniera precisa la latenza del primo blocco.
+
+La soluzione adottata, pertanto, è stata quella di utilizzare una comunicazione basata su \textbf{scambio di messaggi}. In pratica, ciascun blocco gestisce una coppia di segnali: \textit{valid\_out} che indica la \textbf{validità} del dato sulla linea di uscita e \textit{ready\_out} che indica la \textbf{disponibilità} del blocco ad accettare dati in ingresso. Oltre a questi due segnali, ciascun blocco riceve in ingresso un'altra coppia di segnali con una semantica simile: \textit{valid\_in}, che indica la validità del dato in ingresso al blocco (asserito dal blocco a monte) e \textit{ready\_in}, che indica la disponibilità del componente a valle di accettare dati. \\
+Come si può osservare dalla \figurename~\ref{wrapperabs_fsm}, ogni qualvolta un blocco è pronto ad accettare dati in ingresso deve asserire \textit{ready\_out} e attendere che \textit{valid\_in} sia asserito dal blocco a monte. Una volta che \textit{valid\_in} diventa alto, il blocco può procedere all'elaborazione e asserire \textit{valid\_out}, quando l'elaborazione termina, per segnalare la presenza di dati validi sulla linea di uscita. Se il blocco a valle non è pronto ad accettare dati, il blocco dovrà attendere che il segnale \textit{ready\_in} sia alto prima di procedere al calcolo successivo.
+
+\begin{figure}
+\begin{center}
+\includegraphics[scale=0.35, keepaspectratio]{immagini/fsm_wrapper_abs}
+\caption{Automa a stati che realizza il meccanismo di comunicazione}
+\label{wrapperabs_fsm}
+\end{center}
+\end{figure}
+
+\clearpage
+\begin{figure}
+\begin{center}
+\includegraphics[scale=0.31, keepaspectratio]{immagini/fsm_wrapper_max}
+\caption{Automa a stati che realizza il meccanismo di comunicazione per \textit{compute\_max}}
+\label{wrappermax_fsm}
+\end{center}
+\end{figure}
+
+La \figurename~\ref{wrappermax_fsm} mostra l'automa riguardante \textit{compute\_max}. Esso presenta una piccola variazione rispetto a quello per \textit{complex\_abs} ovvero l'introduzione di alcuni stati di attesa che sono necessari per consentire l'aggiornamento corretto di tutte le uscite.
+
+Per ridurre al minimo le modifiche al codice dei componenti, già testato e funzionante, si è optato di aggiungere le funzionalità di comunicazione attraverso l'utilizzo di \textit{wrapper}. Ogni \textit{wrapper} contiene il relativo componente e l'automa a stati che implementa il protocollo di comunicazione, oltre ad alcuni registri la cui utilità è stata illustrata in precedenza.
 
 \chapter{Driver}
 
