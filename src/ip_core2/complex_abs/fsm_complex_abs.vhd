@@ -46,7 +46,6 @@ architecture Behavioral of fsm_complex_abs is
 type state is (reset , waiting_for_valid_in , elaborazione , waiting_for_ready_in);
 signal current_state, next_state : state := reset;
 
-
 begin
 
 registro_stato : process(clk, reset_n, next_state)
@@ -88,7 +87,6 @@ begin
       end case;
 end process;
 
-
 fsm_uscita : process(current_state)
 begin
   valid_out <= '0';
@@ -103,6 +101,5 @@ begin
                                   valid_out <= '1';
   end case;
 end process;
-
 
 end Behavioral;

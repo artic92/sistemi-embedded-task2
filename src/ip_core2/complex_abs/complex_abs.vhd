@@ -45,14 +45,14 @@ entity complex_abs is
 	 Generic ( complex_width : natural := 32 );	--! Parallelismo in bit del numero complesso (inteso come somma di parte reale e immaginaria)
     Port ( clock : in STD_LOGIC;							--! Segnale di temporizzazione
 					 reset_n : in STD_LOGIC;						--! Segnale di reset 0-attivo
-					 enable : in STD_LOGIC;
+					 enable : in STD_LOGIC;							--! Segnale di abilitazione
 					 complex_value : in  STD_LOGIC_VECTOR (complex_width-1 downto 0); --! Numero complesso di cui calcolare il modulo
            abs_value : out  STD_LOGIC_VECTOR (complex_width-1 downto 0);	  --! Modulo del numero complesso
 					 done : out STD_LOGIC);																						--! Segnale di terminazione delle operazioni
 end complex_abs;
 
 --! @brief Architettura del componente descritta nel dominio strutturale
---! @details L'archittettura fa riusco di componenti utilizzati per altri progetti
+--! @details L'archittettura fa riuso di componenti utilizzati per altri progetti
 architecture Structural of complex_abs is
 
 --! Moltiplicatore di Booth
