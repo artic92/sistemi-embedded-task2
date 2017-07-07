@@ -45,12 +45,15 @@ entity complex_max is
               c : natural := 5 );           --! Numero di campioni per intervallo doppler
     Port ( clock : in  STD_LOGIC;           --! Segnale di temporizzazione
            reset_n : in  STD_LOGIC;         --! Segnale di reset 0-attivo
+           ready_in : in STD_LOGIC;
+           valid_in : in STD_LOGIC;
            sample : in  STD_LOGIC_VECTOR (sample_width-1 downto 0);                       --! Valore complesso del campione associato al modulo
            sample_max : out  STD_LOGIC_VECTOR (sample_width-1 downto 0);                  --! Valore complesso del massimo
            pos_campione  : out STD_LOGIC_VECTOR(natural(ceil(log2(real(c))))-1 downto 0); --! Posizione del massimo nell'intervallo doppler
            pos_doppler   : out STD_LOGIC_VECTOR(natural(ceil(log2(real(d))))-1 downto 0); --! Intervallo di frequenze doppler al quale appartiene il massimo
            pos_satellite : out STD_LOGIC_VECTOR(natural(ceil(log2(real(s))))-1 downto 0); --! Satellite associato al massimo
-           done : out STD_LOGIC);                                                         --! Segnale di terminazione delle operazioni
+           ready_out : out STD_LOGIC;
+           valid_out : out STD_LOGIC);                                                         --! Segnale di terminazione delle operazioni
 end complex_max;
 
 --! @brief Architettura top-level descritta nel dominio strutturale
@@ -59,82 +62,80 @@ architecture Structural of complex_max is
 
 --! @brief Blocco che calcola il modulo del campione in ingresso
 --! @see complex_abs
-component complex_abs
-generic (
-  complex_width : natural := 32
-);
-port (
-  clock         : in  STD_LOGIC;
-  reset_n       : in  STD_LOGIC;
-  complex_value : in  STD_LOGIC_VECTOR (complex_width-1 downto 0);
-  abs_value     : out STD_LOGIC_VECTOR (complex_width-1 downto 0);
-  done          : out STD_LOGIC
-);
-end component complex_abs;
+component wrapper_complex_abs is
+    Generic ( complex_width : natural := 32 );
+    Port ( clock : in STD_LOGIC;
+           reset_n : in STD_LOGIC;
+           complex_value : in STD_LOGIC_VECTOR (complex_width-1 downto 0);
+           complex_value_out : out STD_LOGIC_VECTOR(complex_width-1 downto 0);
+           abs_value : out STD_LOGIC_VECTOR (complex_width-1 downto 0);
+           valid_out : out STD_LOGIC;
+           valid_in : in STD_LOGIC;
+           ready_out : out STD_LOGIC;
+           ready_in : in STD_LOGIC);
+end component wrapper_complex_abs;
 
 --! @brief Blocco che calcola il massimo modulo tra tutti i campioni
 --! @see compute_max
-component compute_max
-generic (
-  sample_width : natural := 32;
-  s : natural := 2;
-  d : natural := 2;
-  c : natural := 3
-);
-port (
-  clock         : in  STD_LOGIC;
-  reset_n       : in  STD_LOGIC;
-  sample_abs    : in  STD_LOGIC_VECTOR (sample_width-1 downto 0);
-  sample        : in  STD_LOGIC_VECTOR(sample_width-1 downto 0);
-  pos_campione  : out STD_LOGIC_VECTOR(natural(ceil(log2(real(c))))-1 downto 0);
-  pos_doppler   : out STD_LOGIC_VECTOR(natural(ceil(log2(real(d))))-1 downto 0);
-  pos_satellite : out STD_LOGIC_VECTOR(natural(ceil(log2(real(s))))-1 downto 0);
-  max           : out STD_LOGIC_VECTOR (sample_width-1 downto 0);
-  sample_max    : out STD_LOGIC_VECTOR(sample_width-1 downto 0);
-  done          : out STD_LOGIC
-);
-end component compute_max;
+component wrapper_compute_max is
+    Generic ( sample_width : natural := 32; --! Parallelismo in bit  del campione
+          s : natural := 2;             --! Numero di satelliti
+          d : natural := 2;             --! Numero di intervalli doppler
+          c : natural := 3);            --! Numero di campioni per intervallo doppler
+    Port ( clock : in STD_LOGIC;
+           reset_n : in STD_LOGIC;
+           ready_in : in STD_LOGIC;
+           sample_abs : in STD_LOGIC_VECTOR (sample_width-1 downto 0);
+           sample : in STD_LOGIC_VECTOR (sample_width-1 downto 0);
+           pos_campione : out STD_LOGIC_VECTOR(natural(ceil(log2(real(c))))-1 downto 0);  --! Posizione del massimo nell'intervallo doppler
+           pos_doppler : out STD_LOGIC_VECTOR(natural(ceil(log2(real(d))))-1 downto 0);   --! Intervallo di frequenze doppler al quale appartiene il massimo
+           pos_satellite : out STD_LOGIC_VECTOR(natural(ceil(log2(real(s))))-1 downto 0); --! Satellite associato al massimo
+           max : out  STD_LOGIC_VECTOR (sample_width-1 downto 0);                         --! Modulo del massimo
+           sample_max : out STD_LOGIC_VECTOR(sample_width-1 downto 0);                        --! Valore complesso del massimo
+           valid_in : in STD_LOGIC;
+           ready_out : out STD_LOGIC;                   
+           valid_out : out STD_LOGIC); 
+end component wrapper_compute_max;
 
---! Specifica l'utilizzo dell'architettura strutturale del componente @ref compute_max
-for all : compute_max use entity work.compute_max(Structural);
--- for all : compute_max use entity work.compute_max(Behavioral);
 
 signal abs_value_sig : std_logic_vector(sample_width-1 downto 0);
+signal valid_out_abs : std_logic;
+signal ready_in_abs : std_logic;
+signal complex_value_sig : std_logic_vector(sample_width-1 downto 0);
 
 begin
 
 --! Istanza del componente @ref complex_abs
-complex_abs_i : complex_abs
-generic map (
-  complex_width => sample_width
-)
-port map (
-  clock         => clock,
-  reset_n       => reset_n,
-  complex_value => sample,
-  abs_value     => abs_value_sig,
-  done          => open
-);
+wrapper_complex_abs_inst : wrapper_complex_abs 
+    Generic map ( complex_width => sample_width )
+    Port map ( clock => clock,
+               reset_n => reset_n,
+               complex_value => sample,
+               complex_value_out => complex_value_sig,
+               abs_value => abs_value_sig,
+               valid_out => valid_out_abs,
+               valid_in => valid_in,
+               ready_out => ready_out,
+               ready_in => ready_in_abs);
 
 --! Istanza del componente @ref compute_max
-compute_max_i : compute_max
-generic map (
-  sample_width => sample_width,
-  s => s,
-  d => d,
-  c => c
-)
-port map (
-  clock         => clock,
-  reset_n       => reset_n,
-  sample_abs    => abs_value_sig,
-  sample        => sample,
-  pos_campione  => pos_campione,
-  pos_doppler   => pos_doppler,
-  pos_satellite => pos_satellite,
-  max           => open,
-  sample_max    => sample_max,
-  done          => done
-);
+wrapper_compute_max_inst : wrapper_compute_max 
+    Generic map ( sample_width => sample_width, 
+                  s => s,             
+                  d => d,             
+                  c => c )      
+    Port map ( clock => clock,
+               reset_n => reset_n,
+               ready_in => ready_in,
+               sample_abs => abs_value_sig,
+               sample => complex_value_sig,
+               pos_campione => pos_campione,
+               pos_doppler => pos_doppler,
+               pos_satellite => pos_satellite,
+               max => open,
+               sample_max => sample_max,                        
+               valid_in => valid_out_abs,
+               ready_out => ready_in_abs,                  
+               valid_out => valid_out); 
 
 end Structural;
