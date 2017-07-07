@@ -20,6 +20,7 @@
 --! @file complex_abs.vhd
 --! @author Antonio Riccio, Andrea Scognamiglio, Stefano Sorrentino
 --! @brief Blocco che calcola il modulo di un numero complesso
+--! @anchor complex_abs
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
@@ -44,6 +45,7 @@ entity complex_abs is
 	 Generic ( complex_width : natural := 32 );	--! Parallelismo in bit del numero complesso (inteso come somma di parte reale e immaginaria)
     Port ( clock : in STD_LOGIC;							--! Segnale di temporizzazione
 					 reset_n : in STD_LOGIC;						--! Segnale di reset 0-attivo
+					 enable : in STD_LOGIC;
 					 complex_value : in  STD_LOGIC_VECTOR (complex_width-1 downto 0); --! Numero complesso di cui calcolare il modulo
            abs_value : out  STD_LOGIC_VECTOR (complex_width-1 downto 0);	  --! Modulo del numero complesso
 					 done : out STD_LOGIC);																						--! Segnale di terminazione delle operazioni
@@ -90,6 +92,7 @@ component parte_controllo_complex_abs
 port (
   clock       : in  STD_LOGIC;
   reset_n     : in  STD_LOGIC;
+	enable			: in  STD_LOGIC;
   done_mul    : in  STD_LOGIC;
 	reset_n_all : out STD_LOGIC;
   enable_mul  : out STD_LOGIC;
@@ -161,6 +164,7 @@ control_unit : parte_controllo_complex_abs
 port map (
   clock       => clock,
   reset_n     => reset_n,
+	enable			=> enable,
   done_mul    => done_mul_sig,
 	reset_n_all => reset_n_all_sig,
   enable_mul  => en_mul_sig,

@@ -1,20 +1,20 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
--- Create Date:    16:10:11 07/01/2017 
--- Design Name: 
--- Module Name:    comparatore - DataFlow 
--- Project Name: 
--- Target Devices: 
--- Tool versions: 
--- Description: 
+-- Company:
+-- Engineer:
 --
--- Dependencies: 
+-- Create Date:    16:10:11 07/01/2017
+-- Design Name:
+-- Module Name:    comparatore - DataFlow
+-- Project Name:
+-- Target Devices:
+-- Tool versions:
+-- Description:
 --
--- Revision: 
+-- Dependencies:
+--
+-- Revision:
 -- Revision 0.01 - File Created
--- Additional Comments: 
+-- Additional Comments:
 --
 ----------------------------------------------------------------------------------
 library IEEE;
@@ -32,16 +32,19 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 entity comparatore is
 	 Generic ( width : natural := 31 );
-    Port ( A : in  STD_LOGIC_VECTOR (31 downto 0);
+    Port ( enable : in STD_LOGIC;
+					 A : in  STD_LOGIC_VECTOR (31 downto 0);
            B : in  STD_LOGIC_VECTOR (31 downto 0);
            AbiggerB : out  STD_LOGIC);
 end comparatore;
 
 architecture DataFlow of comparatore is
 
+signal AbiggerB_sig : std_logic;
+
 begin
 
-AbiggerB <= '1' when A > B else '0';
+AbiggerB_sig <= '1' when A > B else '0';
+AbiggerB <= AbiggerB_sig and enable;
 
 end DataFlow;
-

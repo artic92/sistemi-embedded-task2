@@ -44,6 +44,7 @@ ARCHITECTURE behavior OF tb_complex_abs IS
     PORT(
          clock : IN  std_logic;
          reset_n : IN  std_logic;
+         enable : IN std_logic;
          complex_value : IN  std_logic_vector(complex_width-1 downto 0);
          abs_value : OUT  std_logic_vector(complex_width-1 downto 0);
          done : OUT std_logic
@@ -55,6 +56,7 @@ ARCHITECTURE behavior OF tb_complex_abs IS
    --Inputs
    signal clock : std_logic := '0';
    signal reset_n : std_logic := '0';
+   signal enable : std_logic := '0';
    signal complex_value : std_logic_vector(complex_width-1 downto 0) := (others => '0');
 
  	--Outputs
@@ -70,6 +72,7 @@ BEGIN
    uut: complex_abs PORT MAP (
           clock => clock,
           reset_n => reset_n,
+          enable => enable,
           complex_value => complex_value,
           abs_value => abs_value,
           done => done
@@ -94,6 +97,7 @@ BEGIN
 		  wait for clock_period*10;
 
       -- insert stimulus here
+      enable <= '1';
       wait for 5 ns;
       complex_value <= x"00050004"; -- 0x00000029
       wait for 5 ns;
