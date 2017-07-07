@@ -47,7 +47,7 @@ entity compute_max is
               c : natural := 3);            --! Numero di campioni per intervallo doppler
     Port ( clock : in  STD_LOGIC;           --! Segnale di temporizzazione
            reset_n : in  STD_LOGIC;         --! Segnale di reset 0-attivo
-           enable : in STD_LOGIC;
+           enable : in STD_LOGIC;           --! Segnale di abilitazione
            sample_abs : in  STD_LOGIC_VECTOR (sample_width-1 downto 0);                   --! Modulo del campione
            sample : in STD_LOGIC_VECTOR(sample_width-1 downto 0);                         --! Valore complesso del campione associato al modulo
            pos_campione : out STD_LOGIC_VECTOR(natural(ceil(log2(real(c))))-1 downto 0);  --! Posizione del massimo nell'intervallo doppler
