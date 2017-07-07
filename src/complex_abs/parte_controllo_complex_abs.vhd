@@ -32,6 +32,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 entity parte_controllo_complex_abs is
     Port ( clock : in  STD_LOGIC;
            reset_n : in  STD_LOGIC;
+           enable : in STD_LOGIC;
            done_mul : in STD_LOGIC;
            reset_n_all : out STD_LOGIC;
            enable_mul : out STD_LOGIC;
@@ -54,7 +55,7 @@ begin
   	end if;
   end process;
 
-  fsm : process(current_state, reset_n, done_mul)
+  fsm : process(current_state, reset_n, done_mul, enable)
   begin
 
   	enable_mul <= '0';
@@ -64,7 +65,7 @@ begin
   	case current_state is
   		when reset =>
                       reset_n_all <= '0';
-  										if(reset_n = '1') then
+  										if(enable = '1') then
   											next_state <= waiting_mul;
   										else
   											next_state <= reset;
