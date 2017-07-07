@@ -86,6 +86,9 @@ component fsm_compute_max is
            reset_n_all : out STD_LOGIC);
 end component fsm_compute_max;
 
+--   	for all : compute_max use entity work.compute_max(Behavioral);
+    	for all : compute_max use entity work.compute_max(Structural_non_continous);
+
 signal max_done, start, reset_n_all_sig : std_logic := '0';
 
 begin
