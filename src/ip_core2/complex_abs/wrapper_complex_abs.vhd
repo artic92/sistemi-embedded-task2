@@ -20,6 +20,7 @@
 --! @file wrapper_complex_abs.vhd
 --! @author Antonio Riccio, Andrea Scognamiglio, Stefano Sorrentino
 --! @brief Wrapper di @ref complex_abs che fornisce funzioni di comunicazione
+--! @anchor wrapper_complex_abs
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
@@ -57,35 +58,44 @@ architecture Structural of wrapper_complex_abs is
 
 --! @brief Registro a parallelismo generico che opera sul fronte di salita del clock
 component register_n_bit is
-	generic (n : natural := 8);
-    Port ( I : in  STD_LOGIC_VECTOR (n-1 downto 0);
-           clock : in  STD_LOGIC;
-           load : in  STD_LOGIC;
-           reset_n : in  STD_LOGIC;
-           O : out  STD_LOGIC_VECTOR (n-1 downto 0));
+generic (
+  n : natural := 8
+);
+port (
+  I : in  STD_LOGIC_VECTOR (n-1 downto 0);
+  clock : in  STD_LOGIC;
+  load : in  STD_LOGIC;
+  reset_n : in  STD_LOGIC;
+  O : out  STD_LOGIC_VECTOR (n-1 downto 0)
+);
 end component register_n_bit;
 
 --! @brief Calcola il modulo di un numero complesso
 --! @see complex_abs
 component complex_abs is
-    Generic ( complex_width : natural := 32 );
-    Port ( clock : in STD_LOGIC;
-            reset_n : in STD_LOGIC;
-            enable : in STD_LOGIC;
-            complex_value : in  STD_LOGIC_VECTOR (complex_width-1 downto 0);
-            abs_value : out  STD_LOGIC_VECTOR (complex_width-1 downto 0);
-            done : out STD_LOGIC);
+generic (
+  complex_width : natural := 32
+);
+port (
+  clock : in STD_LOGIC;
+  reset_n : in STD_LOGIC;
+  enable : in STD_LOGIC;
+  complex_value : in  STD_LOGIC_VECTOR (complex_width-1 downto 0);
+  abs_value : out  STD_LOGIC_VECTOR (complex_width-1 downto 0);
+  done : out STD_LOGIC
+);
 end component complex_abs;
 
 --! @brief Parte di controllo di questo blocco
 component fsm_complex_abs is
-    Port ( clk : in STD_LOGIC;
-           reset_n : in STD_LOGIC;
-           valid_in : in STD_LOGIC;
-           ready_in : in STD_LOGIC;
-           abs_done : in STD_LOGIC;
-           valid_out : out STD_LOGIC;
-           ready_out : out STD_LOGIC);
+port (
+  clk : in STD_LOGIC;
+  reset_n : in STD_LOGIC;
+  valid_in : in STD_LOGIC;
+  ready_in : in STD_LOGIC;
+  abs_done : in STD_LOGIC;
+  valid_out : out STD_LOGIC;
+  ready_out : out STD_LOGIC);
 end component;
 
 signal done_sig : std_logic := '0';
@@ -122,7 +132,7 @@ port map (
 
 --! @brief Memorizza il modulo del numero complesso in ingresso
 --! @details Questo registro consente il calcolo di un nuovo modulo senza attendere che
---!   il blocco a valle sia pronto a ricevere il risultato una volta pronto
+--!   il blocco a valle sia pronto a ricevere il risultato una volta pronto.
 reg_abs_value: register_n_bit
 generic map (
   n => complex_width
@@ -137,7 +147,7 @@ port map (
 
 --! @brief Memorizza il numero complesso in ingresso
 --! @details Questo registro è necessario per conservare l'associazione tra valore
---!   complesso in ingresso e modulo appena calcolato
+--!   complesso in ingresso e modulo appena calcolato.
 reg_complex_value_out : register_n_bit
 generic map (
   n => complex_width
