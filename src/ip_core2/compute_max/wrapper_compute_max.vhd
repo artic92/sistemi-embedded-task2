@@ -64,6 +64,20 @@ end wrapper_compute_max;
 --! @brief Architettura del componente descritta nel dominio strutturale
 architecture Structural of wrapper_compute_max is
 
+--! @brief Registro a parallelismo generico che opera sul fronte di salita del clock
+component register_n_bit is
+generic (
+  n : natural := 8
+);
+port (
+  I : in  STD_LOGIC_VECTOR (n-1 downto 0);
+  clock : in  STD_LOGIC;
+  load : in  STD_LOGIC;
+  reset_n : in  STD_LOGIC;
+  O : out  STD_LOGIC_VECTOR (n-1 downto 0)
+);
+end component register_n_bit;
+
 --! @brief Calcola il massimo per un insieme di s*d*c campioni\
 --! @see compute_max
 component compute_max is
@@ -107,6 +121,11 @@ end component fsm_compute_max;
 for all : compute_max use entity work.compute_max(Structural_non_continous);
 
 signal max_done, start, reset_n_all_sig : std_logic := '0';
+signal max_sig : std_logic_vector(sample_width-1 downto 0) := (others => '0');
+signal sample_max_sig : std_logic_vector(sample_width-1 downto 0) := (others => '0');
+signal pos_campione_sig : std_logic_vector(natural(ceil(log2(real(c))))-1 downto 0) := (others => '0');
+signal pos_doppler_sig : std_logic_vector(natural(ceil(log2(real(d))))-1 downto 0) := (others => '0');
+signal pos_satellite_sig : std_logic_vector(natural(ceil(log2(real(s))))-1 downto 0) := (others => '0');
 
 begin
 
@@ -124,11 +143,11 @@ port map (
   enable => start,
   sample_abs => sample_abs,
   sample => sample,
-  pos_campione => pos_campione,
-  pos_doppler => pos_doppler,
-  pos_satellite => pos_satellite,
-  max => max,
-  sample_max => sample_max,
+  pos_campione => pos_campione_sig,
+  pos_doppler => pos_doppler_sig,
+  pos_satellite => pos_satellite_sig,
+  max => max_sig,
+  sample_max => sample_max_sig,
   done => max_done
 );
 
@@ -144,6 +163,81 @@ port map (
   valid_out => valid_out,
   ready_out => ready_out,
   reset_n_all => reset_n_all_sig
+);
+
+--! @brief Memorizza il massimo (in valore assoluto) ottenuto dal blocco compute_max
+--! @details Questo registro è necessario per memorizzare il risultato(max) di compute_max
+--!   dato che il componente si resetta dopo che ha terminato l'elaborazione.
+reg_max: register_n_bit
+generic map (
+  n => sample_width
+)
+port map (
+  I => max_sig,
+  clock => clock,
+  load => max_done,
+  reset_n => reset_n,
+  O => max
+);
+
+--! @brief Memorizza il massimo campione ottenuto dal blocco compute_max
+--! @details Questo registro è necessario per memorizzare il risultato(sample_max) di compute_max
+--!   dato che il componente si resetta dopo che ha terminato l'elaborazione.
+reg_sample_max: register_n_bit
+generic map (
+  n => sample_width
+)
+port map (
+  I => sample_max_sig,
+  clock => clock,
+  load => max_done,
+  reset_n => reset_n,
+  O => sample_max
+);
+
+--! @brief Memorizza la pos_campione del risultato ottenuto dal blocco compute_max
+--! @details Questo registro è necessario per memorizzare pos_campione di compute_max
+--!   dato che il componente si resetta dopo che ha terminato l'elaborazione.
+reg_pos_campione: register_n_bit
+generic map (
+  n => natural(ceil(log2(real(c))))
+)
+port map (
+  I => pos_campione_sig,
+  clock => clock,
+  load => max_done,
+  reset_n => reset_n,
+  O => pos_campione
+);
+
+--! @brief Memorizza la pos_doppler del risultato ottenuto dal blocco compute_max
+--! @details Questo registro è necessario per memorizzare pos_doppler di compute_max
+--!   dato che il componente si resetta dopo che ha terminato l'elaborazione.
+reg_pos_doppler: register_n_bit
+generic map (
+  n => natural(ceil(log2(real(d))))
+)
+port map (
+  I => pos_doppler_sig,
+  clock => clock,
+  load => max_done,
+  reset_n => reset_n,
+  O => pos_doppler
+);
+
+--! @brief Memorizza la pos_satellite del risultato ottenuto dal blocco compute_max
+--! @details Questo registro è necessario per memorizzare pos_satellite di compute_max
+--!   dato che il componente si resetta dopo che ha terminato l'elaborazione.
+reg_pos_satellite: register_n_bit
+generic map (
+  n => natural(ceil(log2(real(s))))
+)
+port map (
+  I => pos_satellite_sig,
+  clock => clock,
+  load => max_done,
+  reset_n => reset_n,
+  O => pos_satellite
 );
 
 end Structural;
