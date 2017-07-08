@@ -47,8 +47,8 @@ entity complex_max is
            reset_n : in  STD_LOGIC;         --! Segnale di reset 0-attivo
            valid_in : in STD_LOGIC;         --! Indica che il dato sulla linea di ingresso è valido
            ready_in : in STD_LOGIC;         --! Indica che il componente a valle è pronto ad accettare valori in ingresso
-           sample : in  STD_LOGIC_VECTOR (sample_width-1 downto 0);                       --! Valore complesso del campione associato al modulo
-           sample_max : out  STD_LOGIC_VECTOR (sample_width-1 downto 0);                  --! Valore complesso del massimo
+           sample : in  STD_LOGIC_VECTOR(sample_width-1 downto 0);                       --! Valore complesso del campione associato al modulo
+           sample_max : out  STD_LOGIC_VECTOR(sample_width-1 downto 0);                  --! Valore complesso del massimo
            pos_campione  : out STD_LOGIC_VECTOR(natural(ceil(log2(real(c))))-1 downto 0); --! Posizione del massimo nell'intervallo doppler
            pos_doppler   : out STD_LOGIC_VECTOR(natural(ceil(log2(real(d))))-1 downto 0); --! Intervallo di frequenze doppler al quale appartiene il massimo
            pos_satellite : out STD_LOGIC_VECTOR(natural(ceil(log2(real(s))))-1 downto 0); --! Satellite associato al massimo
@@ -73,9 +73,9 @@ port (
   reset_n : in STD_LOGIC;
   valid_in : in STD_LOGIC;
   ready_in : in STD_LOGIC;
-  complex_value : in STD_LOGIC_VECTOR (complex_width-1 downto 0);
+  complex_value : in STD_LOGIC_VECTOR(complex_width-1 downto 0);
   complex_value_out : out STD_LOGIC_VECTOR(complex_width-1 downto 0);
-  abs_value : out STD_LOGIC_VECTOR (complex_width-1 downto 0);
+  abs_value : out STD_LOGIC_VECTOR(complex_width-1 downto 0);
   valid_out : out STD_LOGIC;
   ready_out : out STD_LOGIC
 );
@@ -95,12 +95,12 @@ port (
   reset_n : in STD_LOGIC;
   valid_in : in STD_LOGIC;
   ready_in : in STD_LOGIC;
-  sample_abs : in STD_LOGIC_VECTOR (sample_width-1 downto 0);
-  sample : in STD_LOGIC_VECTOR (sample_width-1 downto 0);
+  sample_abs : in STD_LOGIC_VECTOR(sample_width-1 downto 0);
+  sample : in STD_LOGIC_VECTOR(sample_width-1 downto 0);
   pos_campione : out STD_LOGIC_VECTOR(natural(ceil(log2(real(c))))-1 downto 0);
   pos_doppler : out STD_LOGIC_VECTOR(natural(ceil(log2(real(d))))-1 downto 0);
   pos_satellite : out STD_LOGIC_VECTOR(natural(ceil(log2(real(s))))-1 downto 0);
-  max : out  STD_LOGIC_VECTOR (sample_width-1 downto 0);
+  max : out  STD_LOGIC_VECTOR(sample_width-1 downto 0);
   sample_max : out STD_LOGIC_VECTOR(sample_width-1 downto 0);
   valid_out : out STD_LOGIC;
   ready_out : out STD_LOGIC
