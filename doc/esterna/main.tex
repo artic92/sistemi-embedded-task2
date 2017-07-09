@@ -87,15 +87,14 @@ L'\textit{IPcore} è stato realizzato mediante un approccio \textbf{modulare} pe
 
 L'architettura del modulo top-level pertanto è composta da due parti: \textit{complex\_abs} che realizza l'operazione di modulo e \textit{compute\_max} che realizza l'operazione di calcolo del massimo.
 
-%%%%%TODO: FIGURA DELLO SCHEMATICO DI COMPLEX_MAX
-%\begin{figure}[hb]
-%\begin{center}
-%\includegraphics[scale=0.5, keepaspectratio]{immagini/complexmax_schemablocchi}
-%\caption{Schema a blocchi di \textit{complex\_max}}
-%\label{complexmax_top}
-%\end{center}
-%\end{figure}
-%\clearpage
+\begin{figure}[hb]
+\begin{center}
+\includegraphics[scale=0.55, keepaspectratio]{immagini/complexmax_schemablocchi}
+\caption{Schema a blocchi di \textit{complex\_max}}
+\label{complexmax_top}
+\end{center}
+\end{figure}
+\clearpage
 
 \subsection{Calcolo del modulo}
 Il componente realizza l'operazione di modulo di un numero complesso secondo la seguente formula:
@@ -118,14 +117,13 @@ L'architettura è composta da due moltiplicatori di \textit{Booth} che calcolano
 
 Il componente è dotato inoltre di un'unità di controllo alla quale è demandato il pilotaggio dei segnali di abilitazione dei moltiplicatori e del loro reset. 
 
-\begin{figure}[hb]
+\begin{figure}
 \begin{center}
 \includegraphics[width=\linewidth, keepaspectratio]{immagini/complexabs_fsm}
 \caption{Automa a stati per il blocco \textit{complex\_abs}}
 \label{complexabs_fsm}
 \end{center}
 \end{figure}
-\clearpage
 
 Dalla \figurename~\ref{complexabs_fsm}, si può notare la presenza dello stato ADD. Questo stato non comporta nessuna operazione da parte dell'automa se non quella di attendere un periodo di clock necessario al sommatore per completare l'operazione di somma (il sommatore \textit{ripple\_carry} è implementato come macchina combinatoria non pipelined).
 \clearpage
@@ -142,27 +140,22 @@ Questa architettura è stata sviluppata con l'intento di ottenere velocemente un
 
 Sostanzialmente il funzionamento del componente è stato sintetizzato a due processi che svolgono compiti ben precisi: uno che elabora il valore dei conteggi e l'altro che effettua i confronti necessari al calcolo del massimo. Per approfondimenti riguardanti le singole fasi dell'algoritmo si rimanda al codice sorgente opportunamente commentato.
 
-% DESCRIVERE PROBLEMA KE NN PUOI LEGGERE IL VALORE AGGIORNATO DI UN SEGNALE CHE HAI APPENA SCRITTO
-
+\clearpage
 \subsubsection{Architettura strutturale}
-Essenzialmente l'architettura è caratterizzata da tre \textit{contatori modulo n}, un \textit{comparatore} e cinque \textit{registri}. I contatori servono a realizzare il ciclo di $s*d*c$ iterazioni attraverso una configurazione a cascata. I registri sono necessari per memorizzare le informazioni relative al massimo campione, ovvero il modulo, il valore complesso, lo spiazzamento all'interno della frequenza doppler, l'intervallo doppler e il satellite. Infine il comparatore è necessario per confrontare il campione i-esimo con il massimo. Nella \figurename~ è possibile osservare come i componenti siano collegati tra loro.
-%\ref{computemax_schema}
+Essenzialmente l'architettura è caratterizzata da tre \textit{contatori modulo n}, un \textit{comparatore} e cinque \textit{registri}. I contatori servono a realizzare il ciclo di $s*d*c$ iterazioni attraverso una configurazione a cascata. I registri sono necessari per memorizzare le informazioni relative al massimo campione, ovvero il modulo, il valore complesso, lo spiazzamento all'interno della frequenza doppler, l'intervallo doppler e il satellite. Infine il comparatore è necessario per confrontare il campione i-esimo con il massimo. Nella \figurename~\ref{computemax_schema} è possibile osservare come i componenti siano collegati tra loro.
 
-%%%%%TODO: FIGURA DELLO SCHEMATICO DI COMPUTE_MAX
-%\begin{figure}[hb]
-%\begin{center}
-%\includegraphics[scale=0.5, keepaspectratio]{immagini/computemax_schemablocchi}
-%\caption{Schema a blocchi di \textit{compute\_max}}
-%\label{computemax_schema}
-%\end{center}
-%\end{figure}
+\begin{figure}
+\includegraphics[scale=0.55, keepaspectratio]{immagini/computemax_schemablocchi}
+\caption{Architettura strutturale di \textit{compute\_max}}
+\label{computemax_schema}
+\end{figure}
 
 Ad ogni iterazione, il modulo del campione i-esimo viene confrontato con l'attuale valore massimo mediante il comparatore. Il massimo viene aggiornato solo nel caso in cui il modulo del campione i-esimo sia maggiore dell'attuale modulo massimo. In tal caso, il comparatore asserisce un segnale che va ad abilitare il caricamento di tutti i registri con le informazioni relative al nuovo campione massimo.
 
 Durante lo sviluppo di questa versione sono sorte diverse problematiche, che hanno portato all'introduzione di ulteriori elementi. Questi problemi sono tipici dello sviluppo per componenti, per questo non sono stati riscontrati durante lo sviluppo della versione comportamentale. \\
 Due ulteriori registri, \textit{reg\_sample\_abs} e \textit{reg\_sample}, sono stati aggiunti con l'intento di \textbf{ritardare} la variazione del segnale di ingresso. Questo accorgimento è necessario per mantenere stabile il segnale del dato, proveniente dall'esterno, per un tempo tale da consentire ai registri interni di campionare il dato corretto sulla linea di ingresso, nel caso di aggiornamento del massimo.\\
 Per un motivo analogo sono stati introdotti dei \textit{flip-flop}, ovvero per ritardare il segnale di caricamento dei registri della doppler e del satellite all'atto dell'aggiornamento del massimo. Questo accorgimento è necessario per consentire ai rispettivi contatori di commutare e consentire ai registri di memorizzare l'indice corretto. Il segnale di caricamento del registro satellite, inoltre, deve tenere in conto di tre ritardi: uno introdotto dal contatore delle doppler, uno introdotto dal componente \textit{livelli2impulsi} e un altro ancora dal contatore dei satelliti. Ovviamente questi segnali potrebbero essere gestiti da un'automa a stati finiti ma si è optato per una soluzione del genere per evitare di complicare il design.\\
-Un blocco \textit{livelli2impulsi} è posto tra i contatori delle doppler e dei satelliti per rendere il segnale a livelli \textit{count\_hit} un segnale impulsivo. Questo accorgimento è necessario per evitare che il contatore dei satelliti sia abilitato al conteggio per più di una volta, cosa che potrebbe capitare quando sono terminate le frequenze doppler per un dato satellite (in tal caso il contatore avrebbe raggiunto il massimo conteggio e asserirebbe \textit{count\_hit} fino alla prossima abilitazione al conteggio, che avverrebbe solo alla fine della prossima frame).\\
+Un blocco \textit{livelli2impulsi} è posto tra i contatori delle doppler e dei satelliti per rendere il segnale a livelli \textit{count\_hit} un segnale impulsivo. Questo accorgimento è necessario per evitare che il contatore dei satelliti sia abilitato al conteggio per più di una volta, cosa che potrebbe capitare quando sono terminate le frequenze doppler per un dato satellite (in tal caso il contatore delle doppler avrebbe raggiunto il massimo conteggio e asserirebbe \textit{count\_hit} fino alla prossima abilitazione al conteggio, che avverrebbe solo alla fine della prossima frame).\\
 \clearpage
 \subsection{Collegamento dei blocchi}
 Durante la fase di collegamento dei blocchi appena descritti sono sorti svariati problemi di sincronizzazione derivanti dal fatto che i blocchi avessero tempi di calcolo differenti. 
@@ -175,7 +168,7 @@ Come si può osservare dalla \figurename~\ref{wrapperabs_fsm}, ogni qualvolta un
 \begin{figure}
 \begin{center}
 \includegraphics[scale=0.35, keepaspectratio]{immagini/fsm_wrapper_abs}
-\caption{Automa a stati che realizza il meccanismo di comunicazione}
+\caption{Protocollo di comunicazione}
 \label{wrapperabs_fsm}
 \end{center}
 \end{figure}
@@ -184,14 +177,23 @@ Come si può osservare dalla \figurename~\ref{wrapperabs_fsm}, ogni qualvolta un
 \begin{figure}
 \begin{center}
 \includegraphics[scale=0.31, keepaspectratio]{immagini/fsm_wrapper_max}
-\caption{Automa a stati che realizza il meccanismo di comunicazione per \textit{compute\_max}}
+\caption{Protocollo di comunicazione per \textit{compute\_max}}
 \label{wrappermax_fsm}
 \end{center}
 \end{figure}
 
 La \figurename~\ref{wrappermax_fsm} mostra l'automa riguardante \textit{compute\_max}. Esso presenta una piccola variazione rispetto a quello per \textit{complex\_abs} ovvero l'introduzione di alcuni stati di attesa che sono necessari per consentire l'aggiornamento corretto di tutte le uscite.
 
-Per ridurre al minimo le modifiche al codice dei componenti, già testato e funzionante, si è optato di aggiungere le funzionalità di comunicazione attraverso l'utilizzo di \textit{wrapper}. Ogni \textit{wrapper} contiene il relativo componente e l'automa a stati che implementa il protocollo di comunicazione, oltre ad alcuni registri la cui utilità è stata illustrata in precedenza.
+Per ridurre al minimo le modifiche al codice dei componenti, già testato e funzionante, si è optato di aggiungere le funzionalità di comunicazione attraverso l'utilizzo di \textit{wrapper}. Ogni \textit{wrapper} contiene il relativo componente e l'automa a stati che implementa il protocollo di comunicazione, oltre ad alcuni registri che sono necessari per memorizzare il risultato dell'elaborazione.
+
+L'aggiunta delle funzionalità di comunicazione e dunque della eventualità che il blocco possa fermarsi in attesa di dati validi in ingresso ha portato a delle leggere modifiche all'architettura di \textit{complex\_max}.\\
+Le modiche hanno riguardato la rimozione dei registri usati per ritardare gli ingressi, \textit{reg\_sample\_abs} e \textit{reg\_sample\_max}, poiché il ritardo necessario a mantenere stabili gli ingressi viene fornito direttamente dall'automa nel wrapper. Inoltre, l'ingresso di abilitazione al conteggio per il contatore dei campioni viene passato all'esterno poiché è sempre l'automa del wrapper a determinarne l'incremento quando necessario. Infine, viene aggiunto un altro blocco \textit{livelli2impulsi}, tra il contatore dei campioni e quello delle doppler, proprio perché il contatore dei campioni non è sempre abilitato e quindi potrebbe generare un segnale di \textit{count\_hit} che permane alto fintantoché non viene nuovamente abilitato al conteggio. L'introduzione di quest'ultimo blocco provoca un'ulteriore latenza che deve essere compensata da un ulteriore \textit{flip-flop} per il segnale di caricamento del registro della doppler. La \figurename~\ref{} illustra come cambia l'architettura per il blocco \textit{compute\_max} in seguito alle osservazioni precedenti.
+
+\begin{figure}
+\includegraphics[scale=0.55, keepaspectratio]{immagini/computemax_schemablocchi2}
+\caption{Architettura strutturale (rivista) di \textit{compute\_max}}
+\label{computemax_schema}
+\end{figure}
 
 \chapter{Driver}
 
