@@ -100,7 +100,9 @@ end component;
 
 signal done_sig : std_logic := '0';
 signal reset_abs_n : std_logic := '0';
+signal ready_out_sig : std_logic := '0';
 signal abs_value_sig : std_logic_vector(complex_width-1 downto 0) := (others => '0');
+signal complex_value_out_sig : std_logic_vector(complex_width-1 downto 0) := (others => '0');
 
 begin
 
@@ -113,7 +115,7 @@ port map (
   clock => clock,
   reset_n => reset_n,
   enable => valid_in,
-  complex_value => complex_value,
+  complex_value => complex_value_out_sig,
   abs_value => abs_value_sig,
   done => done_sig
 );
@@ -127,7 +129,7 @@ port map (
   ready_in => ready_in,
   abs_done => done_sig,
   valid_out => valid_out,
-  ready_out => ready_out
+  ready_out => ready_out_sig
 );
 
 --! @brief Memorizza il modulo del numero complesso in ingresso
@@ -155,9 +157,12 @@ generic map (
 port map (
   I => complex_value,
   clock => clock,
-  load => valid_in,
+  load => ready_out_sig,
   reset_n => reset_n,
-  O => complex_value_out
+  O => complex_value_out_sig
 );
+
+ready_out <= ready_out_sig;
+complex_value_out <= complex_value_out_sig;
 
 end Structural;
