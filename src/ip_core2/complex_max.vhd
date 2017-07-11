@@ -49,6 +49,7 @@ entity complex_max is
            ready_in : in STD_LOGIC;         --! Indica che il componente a valle è pronto ad accettare valori in ingresso
            sample : in  STD_LOGIC_VECTOR(sample_width-1 downto 0);                       --! Valore complesso del campione associato al modulo
            sample_max : out  STD_LOGIC_VECTOR(sample_width-1 downto 0);                  --! Valore complesso del massimo
+           max : out  STD_LOGIC_VECTOR(sample_width-1 downto 0);                         --! Modulo del campione massimo
            pos_campione  : out STD_LOGIC_VECTOR(natural(ceil(log2(real(c))))-1 downto 0); --! Posizione del massimo nell'intervallo doppler
            pos_doppler   : out STD_LOGIC_VECTOR(natural(ceil(log2(real(d))))-1 downto 0); --! Intervallo di frequenze doppler al quale appartiene il massimo
            pos_satellite : out STD_LOGIC_VECTOR(natural(ceil(log2(real(s))))-1 downto 0); --! Satellite associato al massimo
@@ -141,7 +142,7 @@ wrapper_compute_max_inst : wrapper_compute_max
                pos_campione => pos_campione,
                pos_doppler => pos_doppler,
                pos_satellite => pos_satellite,
-               max => open,
+               max => max,
                sample_max => sample_max,
                valid_in => valid_out_abs,
                ready_out => ready_in_abs,

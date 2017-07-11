@@ -49,13 +49,14 @@ component complex_max is
            reset_n : in  STD_LOGIC;
            valid_in : in STD_LOGIC;
            ready_in : in STD_LOGIC;
-           sample : in  STD_LOGIC_VECTOR (sample_width-1 downto 0);
-           sample_max : out  STD_LOGIC_VECTOR (sample_width-1 downto 0);
+           sample : in  STD_LOGIC_VECTOR(sample_width-1 downto 0);
+           sample_max : out  STD_LOGIC_VECTOR(sample_width-1 downto 0);
+           max : out STD_LOGIC_VECTOR(sample_width-1 downto 0);
            pos_campione  : out STD_LOGIC_VECTOR(natural(ceil(log2(real(c))))-1 downto 0);
            pos_doppler   : out STD_LOGIC_VECTOR(natural(ceil(log2(real(d))))-1 downto 0);
            pos_satellite : out STD_LOGIC_VECTOR(natural(ceil(log2(real(s))))-1 downto 0);
            ready_out : out STD_LOGIC;
-           valid_out : out STD_LOGIC);                                                        
+           valid_out : out STD_LOGIC);
 end component;
 
 --Constants
@@ -69,15 +70,18 @@ constant c : natural := 5;
 signal clock : std_logic := '0';
 signal reset_n : std_logic := '1';
 signal sample : std_logic_vector(sample_width-1 downto 0) := (others => '0');
+signal valid_in : std_logic := '0';
+signal ready_in : std_logic := '0';
+
+-- Outputs
 signal sample_max : std_logic_vector(sample_width-1 downto 0) := (others => '0');
+signal max : std_logic_vector(sample_width-1 downto 0) := (others => '0');
 signal pos_campione  : STD_LOGIC_VECTOR(natural(ceil(log2(real(c))))-1 downto 0);
 signal pos_doppler   : STD_LOGIC_VECTOR(natural(ceil(log2(real(d))))-1 downto 0);
 signal pos_satellite : STD_LOGIC_VECTOR(natural(ceil(log2(real(s))))-1 downto 0);
-signal complex_value : std_logic_vector(sample_width-1 downto 0) := (others => '0');
 signal ready_out : std_logic := '0';
 signal valid_out : std_logic := '0';
-signal valid_in : std_logic := '0';
-signal ready_in : std_logic := '0';
+
 
 begin
 
@@ -92,6 +96,7 @@ uut:  complex_max
            valid_in => valid_in,
            sample => sample,
            sample_max => sample_max,
+           max => max,
            pos_campione  => pos_campione,
            pos_doppler   => pos_doppler,
            pos_satellite => pos_satellite,
