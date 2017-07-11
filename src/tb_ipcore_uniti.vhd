@@ -71,7 +71,7 @@ architecture Behavioral of tb_ipcore_uniti is
     pos_campione  : out STD_LOGIC_VECTOR(natural(ceil(log2(real(c))))-1 downto 0);
     pos_doppler   : out STD_LOGIC_VECTOR(natural(ceil(log2(real(d))))-1 downto 0);
     pos_satellite : out STD_LOGIC_VECTOR(natural(ceil(log2(real(s))))-1 downto 0);
-    max           : out STD_LOGIC_VECTOR(sample_width-1 downto 0);
+    --max           : out STD_LOGIC_VECTOR(sample_width-1 downto 0);
     valid_out     : out STD_LOGIC;
     ready_out     : out STD_LOGIC
   );
@@ -88,7 +88,6 @@ architecture Behavioral of tb_ipcore_uniti is
   signal clock : STD_LOGIC := '0';
   signal reset_n : STD_LOGIC := '0';
   signal valid_in : STD_LOGIC := '0';
-  signal ready_in : STD_LOGIC := '0';
   signal poff_pinc : STD_LOGIC_VECTOR ( 47 downto 0 );
   signal poff : STD_LOGIC_VECTOR (23 downto 0) := (others => '0');
   signal pinc : STD_LOGIC_VECTOR (23 downto 0) := (others => '0');
@@ -141,7 +140,7 @@ port map (
   pos_campione  => pos_campione,
   pos_doppler   => pos_doppler,
   pos_satellite => pos_satellite,
-  max           => max,
+  --max           => max,
   valid_out     => valid_out,
   ready_out     => complex_max_ready_sig
 );
@@ -166,6 +165,9 @@ wait until ready_out = '1';
 poff <= x"000000";
 pinc <= x"00099c";
 valid_in <= '1';
+
+wait for 10 us;
+reset_n <= '0';
 
 wait;
 

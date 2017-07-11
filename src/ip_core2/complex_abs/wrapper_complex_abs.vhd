@@ -98,11 +98,20 @@ port (
   ready_out : out STD_LOGIC);
 end component;
 
+component d_edge_triggered
+port (
+  data_in  : in  STD_LOGIC;
+  reset_n  : in  STD_LOGIC;
+  clock    : in  STD_LOGIC;
+  data_out : out STD_LOGIC
+);
+end component d_edge_triggered;
+
 signal done_sig : std_logic := '0';
 signal reset_abs_n : std_logic := '0';
 signal ready_out_sig : std_logic := '0';
+signal ready_out_delayed : std_logic := '0';
 signal abs_value_sig : std_logic_vector(complex_width-1 downto 0) := (others => '0');
-signal complex_value_out_sig : std_logic_vector(complex_width-1 downto 0) := (others => '0');
 
 begin
 
@@ -115,7 +124,7 @@ port map (
   clock => clock,
   reset_n => reset_n,
   enable => valid_in,
-  complex_value => complex_value_out_sig,
+  complex_value => complex_value,
   abs_value => abs_value_sig,
   done => done_sig
 );
@@ -147,6 +156,14 @@ port map (
   O => abs_value
 );
 
+ff_load_complex_value : d_edge_triggered
+port map (
+  data_in  => ready_out_sig,
+  reset_n  => reset_n,
+  clock    => clock,
+  data_out => ready_out_delayed
+);
+
 --! @brief Memorizza il numero complesso in ingresso
 --! @details Questo registro è necessario per conservare l'associazione tra valore
 --!   complesso in ingresso e modulo appena calcolato.
@@ -157,12 +174,11 @@ generic map (
 port map (
   I => complex_value,
   clock => clock,
-  load => ready_out_sig,
+  load => ready_out_delayed,
   reset_n => reset_n,
-  O => complex_value_out_sig
+  O => complex_value_out
 );
 
 ready_out <= ready_out_sig;
-complex_value_out <= complex_value_out_sig;
 
 end Structural;
