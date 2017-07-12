@@ -232,7 +232,7 @@ ciclo_satelliti : for i in 0 to s-1 loop
   wait until done = '1';
 
   --SESTA DOPPLER (che presenta il massimo)
-  poff <= x"F0F0F0"; (che presenta il massimo)
+  poff <= x"F0F0F0";
   --poff <= x"00000F";
   pinc <= x"FFFF99";
 
