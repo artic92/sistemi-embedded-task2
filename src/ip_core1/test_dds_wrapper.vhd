@@ -125,7 +125,7 @@ generic map (
 port map (
   I => sine_cosine_sig,
   clock => clock,
-  load => valid_out_sig,
+  load => counter_enable_sig,
   reset_n => reset_n_all,
   O => sine_cosine
 );

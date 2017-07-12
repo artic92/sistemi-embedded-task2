@@ -82,9 +82,9 @@ architecture Behavioral of tb_ipcore_uniti is
   constant clock_period : time := 10 ns;
 
   constant sample_width : natural:= 32;
-  constant s : natural:= 3;
-  constant d : natural:= 3;
-  constant c : natural:= 5;
+  constant s : natural:= 2;
+  constant d : natural:= 11;
+  constant c : natural:= 6;
 
   --Inputs
   signal clock : STD_LOGIC := '0';
@@ -163,11 +163,47 @@ begin
   stimuli: process
   begin
 
+--LISTA DOPPLERS
+--FFF597
+--FFF797
+--FFF998
+--FFFB98
+--FFFD99
+--FFFF99
+--19A
+--39B
+--59B
+--79C
+--99C
+
+
   wait for clock_period*10;
   reset_n <= '1';
 
+ciclo_satelliti : for i in 0 to s-1 loop
+  --PRIMA DOPPLER
   poff <= x"000000";
-  pinc <= x"000000";
+  pinc <= x"FFF597";
+
+  valid_in <= '1';
+  wait for clock_period*2;
+  valid_in <= '0';
+
+  wait until done = '1';
+  
+  --SECONDA DOPPLER
+  poff <= x"000000";
+  pinc <= x"FFF797";
+
+  valid_in <= '1';
+  wait for clock_period*2;
+  valid_in <= '0';
+
+  wait until done = '1';
+  
+  --TERZA DOPPLER
+  poff <= x"000FFF";
+  pinc <= x"FFF998";
 
   valid_in <= '1';
   wait for clock_period*2;
@@ -175,8 +211,9 @@ begin
 
   wait until done = '1';
 
-  poff <= x"000000";
-  pinc <= x"00088e";
+  --QUARTA DOPPLER
+  poff <= x"FFF000";
+  pinc <= x"FFFB98";
 
   valid_in <= '1';
   wait for clock_period*2;
@@ -184,8 +221,9 @@ begin
 
   wait until done = '1';
 
-  poff <= x"000000";
-  pinc <= x"00077f";
+  --QUINTA DOPPLER
+  poff <= x"0F0F0F";
+  pinc <= x"FFFD99";
 
   valid_in <= '1';
   wait for clock_period*2;
@@ -193,8 +231,20 @@ begin
 
   wait until done = '1';
 
-  poff <= x"000000";
-  pinc <= x"00066c";
+  --SESTA DOPPLER (che presenta il massimo)
+  poff <= x"F0F0F0"; (che presenta il massimo)
+  --poff <= x"00000F";
+  pinc <= x"FFFF99";
+
+  valid_in <= '1';
+  wait for clock_period*2;
+  valid_in <= '0';
+
+  wait until done = '1';
+  
+  --SETTIMA DOPPLER
+  poff <= x"FF0000";
+  pinc <= x"00019A";
 
   valid_in <= '1';
   wait for clock_period*2;
@@ -202,8 +252,9 @@ begin
 
   wait until done = '1';
 
-  poff <= x"000000";
-  pinc <= x"00066c";
+  --OTTAVA DOPPLER
+  poff <= x"00FF00";
+  pinc <= x"00039B";
 
   valid_in <= '1';
   wait for clock_period*2;
@@ -211,49 +262,37 @@ begin
 
   wait until done = '1';
 
-  poff <= x"000000";
-  pinc <= x"00066c";
+  --NONA DOPPLER
+  poff <= x"0000DC";
+  pinc <= x"00059B";
 
   valid_in <= '1';
   wait for clock_period*2;
   valid_in <= '0';
-
+  
   wait until done = '1';
-
-  poff <= x"000000";
-  pinc <= x"00066c";
-
+  
+  --DECIMA DOPPLER
+  poff <= x"003400";
+  pinc <= x"00079C";
+    
   valid_in <= '1';
   wait for clock_period*2;
   valid_in <= '0';
-
+    
   wait until done = '1';
-
-  poff <= x"000000";
-  pinc <= x"00066c";
-
+  
+  --UNDICESIMA DOPPLER
+  poff <= x"220000";
+  pinc <= x"00099C";
+     
   valid_in <= '1';
   wait for clock_period*2;
   valid_in <= '0';
-
+     
   wait until done = '1';
-
-  poff <= x"000000";
-  pinc <= x"00066c";
-
-  valid_in <= '1';
-  wait for clock_period*2;
-  valid_in <= '0';
-
-  wait until done = '1';
-
-  poff <= x"000000";
-  pinc <= x"ffffff";
-
-  valid_in <= '1';
-  wait for clock_period*2;
-  valid_in <= '0';
-
+  
+end loop;
   wait until valid_out = '1';
   -- METTERE QUI L'ASSERT PER LA VERIFICA DEL MAX ASSOLUTO
 
