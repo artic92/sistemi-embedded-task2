@@ -17,9 +17,10 @@
 -- Additional Comments:
 --
 ----------------------------------------------------------------------------------
---! @file complex_abs.vhd
+--! @file compute_max.vhd
 --! @author Antonio Riccio, Andrea Scognamiglio, Stefano Sorrentino
 --! @brief Blocco che calcola il massimo in un insieme di campioni
+--! @example tb_compute_max.vhd
 --! @anchor compute_max
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
@@ -51,7 +52,7 @@ entity compute_max is
            sample_abs : in  STD_LOGIC_VECTOR (sample_width-1 downto 0);                   --! Modulo del campione
            sample : in STD_LOGIC_VECTOR(sample_width-1 downto 0);                         --! Valore complesso del campione associato al modulo
            pos_campione : out STD_LOGIC_VECTOR(natural(ceil(log2(real(c))))-1 downto 0);  --! Posizione del massimo nell'intervallo doppler
-           pos_doppler : out STD_LOGIC_VECTOR(natural(ceil(log2(real(d))))-1 downto 0);   --! Intervallo di frequenze doppler al quale appartiene il massimo
+           pos_doppler : out STD_LOGIC_VECTOR(natural(ceil(log2(real(d))))-1 downto 0);   --! Intervallo di frequenze doppler del massimo
            pos_satellite : out STD_LOGIC_VECTOR(natural(ceil(log2(real(s))))-1 downto 0); --! Satellite associato al massimo
            max : out  STD_LOGIC_VECTOR (sample_width-1 downto 0);                         --! Modulo del massimo
            sample_max : out STD_LOGIC_VECTOR(sample_width-1 downto 0);                    --! Valore complesso del massimo

@@ -98,6 +98,7 @@ port (
   ready_out : out STD_LOGIC);
 end component;
 
+--! @brief Flip-flop D con reset 0-attivo asincrono
 component d_edge_triggered
 port (
   data_in  : in  STD_LOGIC;
@@ -141,7 +142,7 @@ port map (
   ready_out => ready_out_sig
 );
 
---! @brief Memorizza il modulo del numero complesso in ingresso
+--! @brief Memorizza il modulo del numero complesso
 --! @details Questo registro è necessario per memorizzare il risultato di complex_abs
 --!   dato che il componente si resetta dopo che ha terminato l'elaborazione.
 reg_abs_value: register_n_bit
@@ -166,7 +167,7 @@ port map (
 
 --! @brief Memorizza il numero complesso in ingresso
 --! @details Questo registro è necessario per conservare l'associazione tra valore
---!   complesso in ingresso e modulo appena calcolato.
+--!   complesso in ingresso e modulo calcolato dal blocco complex_abs.
 reg_complex_value_out : register_n_bit
 generic map (
   n => complex_width

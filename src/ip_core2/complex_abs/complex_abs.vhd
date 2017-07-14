@@ -20,6 +20,7 @@
 --! @file complex_abs.vhd
 --! @author Antonio Riccio, Andrea Scognamiglio, Stefano Sorrentino
 --! @brief Blocco che calcola il modulo di un numero complesso
+--! @example tb_complex_abs.vhd
 --! @anchor complex_abs
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;

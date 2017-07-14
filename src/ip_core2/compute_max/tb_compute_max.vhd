@@ -140,7 +140,7 @@ BEGIN
       -- TEST CASE: primo in assoluto (0,0,0,0x00010001)
       --sample_abs <= x"00000050";
   		sample_abs <= x"00000002";
-		enable <= '1';
+		  enable <= '1';
   		wait for clock_period;
 
   		sample <= sample + 65537;

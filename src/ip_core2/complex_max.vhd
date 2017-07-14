@@ -20,6 +20,7 @@
 --! @file complex_max.vhd
 --! @author Antonio Riccio, Andrea Scognamiglio, Stefano Sorrentino
 --! @brief Entità top-level
+--! @example tb_complex_max.vhd
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;

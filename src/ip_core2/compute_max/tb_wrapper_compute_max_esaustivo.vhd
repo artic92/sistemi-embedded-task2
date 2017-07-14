@@ -42,20 +42,20 @@ end tb_wrapper_compute_max;
 architecture Behavioral of tb_wrapper_compute_max is
 
 component wrapper_compute_max is
-    Generic ( sample_width : natural := 32; --! Parallelismo in bit  del campione
-          s : natural := 2;             --! Numero di satelliti
-          d : natural := 2;             --! Numero di intervalli doppler
-          c : natural := 3);            --! Numero di campioni per intervallo doppler
+    Generic ( sample_width : natural := 32;
+          s : natural := 2;
+          d : natural := 2;
+          c : natural := 3);
     Port ( clock : in STD_LOGIC;
            reset_n : in STD_LOGIC;
            ready_in : in STD_LOGIC;
            sample_abs : in STD_LOGIC_VECTOR (sample_width-1 downto 0);
            sample : in STD_LOGIC_VECTOR (sample_width-1 downto 0);
-           pos_campione : out STD_LOGIC_VECTOR(natural(ceil(log2(real(c))))-1 downto 0);  --! Posizione del massimo nell'intervallo doppler
-           pos_doppler : out STD_LOGIC_VECTOR(natural(ceil(log2(real(d))))-1 downto 0);   --! Intervallo di frequenze doppler al quale appartiene il massimo
-           pos_satellite : out STD_LOGIC_VECTOR(natural(ceil(log2(real(s))))-1 downto 0); --! Satellite associato al massimo
-           max : out  STD_LOGIC_VECTOR (sample_width-1 downto 0);                         --! Modulo del massimo
-           sample_max : out STD_LOGIC_VECTOR(sample_width-1 downto 0);                        --! Valore complesso del massimo
+           pos_campione : out STD_LOGIC_VECTOR(natural(ceil(log2(real(c))))-1 downto 0);
+           pos_doppler : out STD_LOGIC_VECTOR(natural(ceil(log2(real(d))))-1 downto 0);
+           pos_satellite : out STD_LOGIC_VECTOR(natural(ceil(log2(real(s))))-1 downto 0);
+           max : out  STD_LOGIC_VECTOR (sample_width-1 downto 0);
+           sample_max : out STD_LOGIC_VECTOR(sample_width-1 downto 0);
            valid_in : in STD_LOGIC;
            ready_out : out STD_LOGIC;
            valid_out : out STD_LOGIC);
@@ -68,7 +68,6 @@ constant s : natural := 5;
 constant d: natural := 4;
 constant c : natural := 5;
 constant num_cicli : natural := s*c*d;
-
 
 --Inputs
 signal clock : std_logic := '0';
@@ -123,7 +122,7 @@ end process;
     variable pos_campione_variable : integer :=0;
     variable pos_doppler_variable : integer :=0;
     variable pos_satellite_variable : integer :=0;
-    
+
     begin
         -- hold reset state for 100 ns.
         reset_n<='0';
@@ -131,7 +130,7 @@ end process;
         wait for 95 ns;
         reset_n<='1';
         ready_in <= '1';
-        
+
         for j in 0 to num_cicli-1 loop
             --ready_in <= '0';
             for i in 0 to num_cicli-1 loop
@@ -161,15 +160,15 @@ end process;
             assert(pos_campione_variable = pos_campione) report "Test Fallito pos_campione trovata errata!";
             assert(pos_doppler_variable = pos_doppler) report "Test Fallito pos_doppler trovata errata!";
             assert(pos_satellite_variable = pos_satellite) report "Test Fallito pos_satellite trovata errata!";
-            
+
             massimo := (others => '0');
             reset_n <= '0';
             wait for clock_period;
             reset_n <= '1';
             --ready_in <= '1';
         end loop;
-        
+
         wait;
  end process;
- 
+
 end Behavioral;
