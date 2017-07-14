@@ -7,6 +7,10 @@
 --Design      : test_dds_wrapper
 --Purpose     : IP block netlist
 ----------------------------------------------------------------------------------
+--! @file test_dds_wrapper.vhd
+--! @author Antonio Riccio, Andrea Scognamiglio, Stefano Sorrentino
+--! @brief Entità top-level
+--! @example tb_wrapper_dds.vhd
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.STD_LOGIC_UNSIGNED.ALL;
@@ -17,24 +21,43 @@ use IEEE.math_real.log2;
 library UNISIM;
 use UNISIM.VCOMPONENTS.ALL;
 
+--! @brief Componente top-level
+--! @details Il componente genera campioni di un segnale periodico la cui frequenza
+--!   e fase possono essere configurate dinamicamente.
+--!
+--!   Gli incrementi di fase e di frequenza sono dei valori espressi su 24 bit e
+--!   sono concatenati nel segnale poff_pinc con poff che occupa i primi 24 bit e pinc
+--!   che occupa gli ultimi 24 bit.
+--!
+--!   Il segnale di uscita è un valore complesso che ha la
+--!   parte immaginaria nella metà più significativa e la parte reale nella metà meno significativa.
+--!
+--!   Il componente inizia a generare il numero richiesto di campioni ogni volta che
+--!   il segnale valid_in è alto. Il segnale done viene asserito ogni volta
+--!   che termina la generazione dei campioni, in tal caso il blocco si mette in attesa che valid_in sia nuovamente alto
+--!   per poter generare altri campioni.
 entity test_dds_wrapper is
   generic (
-    campioni : natural := 20460 );
+    campioni : natural := 20460 );                    --! Numero di campioni da generare
   port (
-    clock : in STD_LOGIC;
-    reset_n : in STD_LOGIC;
-    poff_pinc : in STD_LOGIC_VECTOR(47 downto 0);
-    ready_in : in STD_LOGIC;
-    valid_in : in STD_LOGIC;
-    ready_out : out STD_LOGIC;
-    valid_out : out STD_LOGIC;
-    sine_cosine : out STD_LOGIC_VECTOR(31 downto 0);
-    done : out STD_LOGIC
+    clock : in STD_LOGIC;                             --! Segnale di temporizzazione
+    reset_n : in STD_LOGIC;                           --! Segnale di reset 0-attivo
+    poff_pinc : in STD_LOGIC_VECTOR(47 downto 0);     --! Spiazzamenti di fase e di frequenza (poff + pinc)
+    valid_in : in STD_LOGIC;                          --! Indica che il dato sulla linea di ingresso è valido
+    ready_in : in STD_LOGIC;                          --! Indica che il componente a valle è pronto ad accettare valori in ingresso
+    valid_out : out STD_LOGIC;                        --! Indica che il dato sulla linea di uscita è valido
+    ready_out : out STD_LOGIC;                        --! Indica che questo componente è pronto ad accettare valori in ingresso
+    sine_cosine : out STD_LOGIC_VECTOR(31 downto 0);  --! Campioni complessi del segnale periodico (immaginaria + reale)
+    done : out STD_LOGIC                              --! Segnale di terminazione delle operazioni
   );
 end test_dds_wrapper;
 
+--! @brief Architettura top-level descritta nel dominio strutturale
+--! @details Il componente fa uso del blocco DDS_compiler della Xilinx per generare
+--!   campioni di un segnale periodico con una fase ed una frequenza configurabili.
 architecture STRUCTURE of test_dds_wrapper is
 
+  --! @brief Blocco che genera i campioni del segnale periodico
   component test_dds is
   port (
     ready_out : out STD_LOGIC;
@@ -48,6 +71,7 @@ architecture STRUCTURE of test_dds_wrapper is
   );
   end component test_dds;
 
+  --! @brief Registro a parallelismo generico che opera sul fronte di salita del clock
   component register_n_bit is
   generic (
     n : natural := 8
@@ -61,6 +85,8 @@ architecture STRUCTURE of test_dds_wrapper is
   );
   end component register_n_bit;
 
+  --! @brief Contatore modulo-n di tipo up-down con caricamento del valore di conteggio e
+  --!   segnali di uscita indicanti valore e fine del conteggio
   component counter_modulo_n
   generic (
     n : natural := 16
@@ -77,6 +103,7 @@ architecture STRUCTURE of test_dds_wrapper is
   );
   end component counter_modulo_n;
 
+  --! @brief Flip-flop D con reset 0-attivo asincrono
   component d_edge_triggered
   port (
     data_in  : in  STD_LOGIC;
@@ -86,6 +113,7 @@ architecture STRUCTURE of test_dds_wrapper is
   );
   end component d_edge_triggered;
 
+  --! @brief Parte di controllo del blocco
   component fsm_dds_wrapper
   port (
     clock       : in  STD_LOGIC;
@@ -97,15 +125,18 @@ architecture STRUCTURE of test_dds_wrapper is
   end component fsm_dds_wrapper;
 
   signal sine_cosine_sig : std_logic_vector(31 downto 0);
-  signal valid_out_sig : std_logic;
-  signal counter_enable_sig : std_logic;
-  signal count_hit_sig, reset_n_all : std_logic;
+  signal reset_n_all, counter_enable_sig, count_hit_sig, valid_out_sig : std_logic;
 
 begin
 
 valid_out <= valid_out_sig;
+
+-- Il contatore si incrementa solo quando si è sicuri che il blocco a valle abbia
+-- prelevato il dato in uscita. Questa situazione accade quando il blocco DDS ha
+-- generato un'uscita valida ed il blocco a valle è pronto a ricevere il dato (asserendo ready_in).
 counter_enable_sig <= valid_out_sig and ready_in;
 
+--! @brief Il DDS genera dei campioni complessi campionati ad una frequenza di 20.46 Mhz
 test_dds_i : component test_dds
 port map (
   clock => clock,
@@ -118,6 +149,7 @@ port map (
   valid_out => valid_out_sig
 );
 
+--! @brief Il registro memorizza il valore complesso generato dal DDS
 reg_complex_value_out : register_n_bit
 generic map (
   n => 32
@@ -130,6 +162,9 @@ port map (
   O => sine_cosine
 );
 
+--! @brief Contatore che controlla il numero di campioni da generare
+--! @details Una volta raggiunto il massimo conteggio, il contatore asserisce un segnale
+--!   (count_hit) che porta l'entità top-level a portarsi in uno stato di reset
 counter_campioni : counter_modulo_n
 generic map (
   n => campioni
@@ -145,6 +180,8 @@ port map (
   count_hit      => count_hit_sig
 );
 
+--! @brief Flip-flop necessario a ritardare il segnale di count_hit del contatore
+--! @details Il segnale count_hit viene utilizzato anche per indicare la terminazione delle operazioni (done)
 ff_count_hit_delayed : d_edge_triggered
 port map (
   data_in  => count_hit_sig,
@@ -153,6 +190,10 @@ port map (
   data_out => done
 );
 
+--! @brief Automa a stati finiti per la gestione dei segnali di controllo del DDS.
+--! @details Attende la terminazione del conteggio e resetta il DDS_compiler.
+--!   Questo componente è necessario per gestire opportunamente il segnale
+--!   di reset del blocco DDS, il quale deve mantenersi basso per almeno due periodi di clock.
 fsm_dds_wrapper_i : fsm_dds_wrapper
 port map (
   clock       => clock,

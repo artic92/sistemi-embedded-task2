@@ -42,19 +42,19 @@ architecture Behavioral of tb_wrapper_dds is
     clock       : in  STD_LOGIC;
     reset_n     : in  STD_LOGIC;
     poff_pinc   : in  STD_LOGIC_VECTOR(47 downto 0);
-    ready_in    : in  STD_LOGIC;
     valid_in    : in  STD_LOGIC;
-    ready_out   : out STD_LOGIC;
+    ready_in    : in  STD_LOGIC;
     valid_out   : out STD_LOGIC;
+    ready_out   : out STD_LOGIC;
     sine_cosine : out STD_LOGIC_VECTOR(31 downto 0);
     done        : out STD_LOGIC
   );
   end component test_dds_wrapper;
 
-  constant clock_period : time := 10 ns;
-
+  --Constants
   constant c : natural:= 5;
   constant sample_width : natural := 32;
+  constant clock_period : time := 10 ns;
 
   --Inputs
   signal clock : STD_LOGIC := '0';
@@ -62,7 +62,7 @@ architecture Behavioral of tb_wrapper_dds is
   signal valid_in : STD_LOGIC := '0';
   signal poff_pinc : STD_LOGIC_VECTOR(47 downto 0);
 
-  -- Utili per il test
+  --Utili per il test
   signal poff : STD_LOGIC_VECTOR (23 downto 0) := (others => '0');
   signal pinc : STD_LOGIC_VECTOR (23 downto 0) := (others => '0');
 
@@ -104,39 +104,39 @@ begin
   stimuli: process
   begin
 
-  wait for clock_period*10;
-  reset_n <= '1';
+    wait for clock_period*10;
+    reset_n <= '1';
 
-  poff <= x"000000";
-  pinc <= x"00099c";
+    poff <= x"000000";
+    pinc <= x"FFF597";
 
-  -- Genero c campioni
-  valid_in <= '1';
-  -- Valid_in deve essere alto 2 periodi di clock
-  wait for clock_period*2;
-  valid_in <= '0';
-  
-  wait until done = '1';
-  
-  poff <= x"000000";
-  pinc <= x"00088f";
-  
-  -- Genero ALTRI c campioni
-  valid_in <= '1';
-  wait for clock_period*2;
-  valid_in <= '0';
-  
-  wait until done = '1';
-  
-  poff <= x"000000";
-  pinc <= x"000fec";
-  
-  -- Genero ALTRI c campioni
-  valid_in <= '1';
-  wait for clock_period*2;
-  valid_in <= '0';
+    -- Genero c campioni
+    valid_in <= '1';
+    -- Valid_in deve essere alto almeno 2 periodi di clock
+    wait for clock_period*2;
+    valid_in <= '0';
 
-  wait;
+    wait until done = '1';
+
+    poff <= x"000000";
+    pinc <= x"FFF797";
+
+    -- Genero ALTRI c campioni
+    valid_in <= '1';
+    wait for clock_period*2;
+    valid_in <= '0';
+
+    wait until done = '1';
+
+    poff <= x"000FFF";
+    pinc <= x"FFF998";
+
+    -- Genero ALTRI c campioni
+    valid_in <= '1';
+    wait for clock_period*2;
+    valid_in <= '0';
+
+    wait;
   end process;
 
 end Behavioral;

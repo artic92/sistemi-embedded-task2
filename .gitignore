@@ -7,7 +7,7 @@
 *.log
 
 # Path documentazione
-doc/vhdl_ipcore2
+doc/vhdl_ipcore*
 
 # Macos files
 .DS_*
