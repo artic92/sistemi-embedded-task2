@@ -62,7 +62,108 @@ Il task prevede la realizzazione di due \textit{IPcore}, ciascuno dei quali andr
 In questo documento verranno illustrati i concetti fondamentali e le decisioni di progetto che hanno portato alla realizzazione degli artefatti finali, per approfondimenti si rimanda alla documentazione interna e al codice sorgente allegati. 
 
 \chapter{IPcore 1}
+Le specifiche per questo componente prescrivono la realizzazione di un \textit{IPcore} che generi campioni di un segnale periodico la cui frequenza e la cui fase possono essere configurati dinamicamente. Le specifiche, inoltre, fissano la frequenza di campionamento del segnale periodico a 20.46 MHz e la possibilità di configurare il numero di campioni da generare in fase di istanziazione del componente. Il campione in uscita deve essere rappresentato su 32 bit di cui 16 bit di parte immaginaria e 16 bit di parte reale.
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics[scale=0.6, keepaspectratio]{immagini/ipcore1_toplevel}
+\caption{IPcore 1 ad alto livello}
+\label{ipcore1_top}
+\end{center}
+\end{figure}
+
+\section{Scelta dei componenti}
+Per ridurre il tempo di sviluppo dell'\textit{IPcore} sono state effettuate delle ricerche per verificare l'esistenza di blocchi già esistenti. I componenti che più si avvicinavano alle specifiche risultavano essere di \textbf{Xilinx}: in particolare i blocchi \textit{Cordic} e \textit{DDS\_compiler}. Dopo un'attenta lettura dei manuali utente, la scelta è ricaduta sul \textit{DDS\_compiler} poiché il \textit{Cordic} non consentiva di selezionare la frequenza del segnale di uscita ma solo la fase.
+
+Le fasi successive dello sviluppo dell'\textit{IPcore} si sono concentrate sull'adattamento del componente Xilinx in conformità alle specifiche.
 \section{Architettura}
+L'architettura è formata principalmente dal blocco descritto in precedenza insieme ad altri componenti \textit{riutilizzati} da altri progetti. In particolare, sono stati aggiunti un contatore \textit{modulo-n}, per controllare il numero di campioni da fornire in uscita, ed un'automa a stati finiti, per controllare opportunamente i segnali di controllo del \textit{DDS\_compiler}. L'aggiunta del registro è necessaria poiché l'\textit{IPcore} deve lavorare in un'architettura pipelined. Infine una porta AND viene utilizzata per controllare l'abilitazione del contatore e il caricamento del registro di uscita.  Questi componenti devono essere abilitati solo nel momento in cui il blocco a valle è pronto ad accettare dati, ovvero il segnale \textit{ready\_in} è alto, ed il DDS abbia un valore valido in uscita, ovvero il segnale \textit{valid\_out} è alto. La \figurename~\ref{ipcore1_schemablocchi} mostra come i blocchi sono collegati tra loro.
+
+\begin{figure}
+\begin{center}
+\includegraphics[scale=0.5, keepaspectratio]{immagini/ipcore1_schemablocchi}
+\caption{Schema a blocchi di \textit{signal\_generator}}
+\label{ipcore1_schemablocchi}
+\end{center}
+\end{figure}
+
+\clearpage
+L'automa a stati finiti, il cui schema è illustrato in \figurename~\ref{ipcore1_fsm}, si occupa di controllare i segnali di controllo del \textit{DDS\_compiler}. Una volta che il segnale \textit{valid\_in} è asserito l'automa resetta il \textit{DDS\_compiler}, abbassando il segnale di \textit{reset} per due periodi di clock, dopodiché si mette in attesa che il contatore abbia terminato il conteggio per poter poi asserire il segnale di \textit{done} e rimettersi in attesa che \textit{valid\_in} sia nuovamente alto.
+
+\begin{figure}
+\begin{center}
+\includegraphics[scale=0.38, keepaspectratio]{immagini/fsm_ipcore1}
+\caption{Automa a stati finiti per l'IPcore 1}
+\label{ipcore1_fsm}
+\end{center}
+\end{figure}
+
+\section{Valori di PINC e POFF}
+Le specifiche richiedevano di calcolare i valori di spiazzamento di fase e frequenza per ottenere 11 particolari frequenze di uscita che appartenessero all'intervallo compreso tra -3250 e 3000 Hz con salti di 625 Hz. \\
+Dal manuale del DDS, la formula per il calcolo della frequenza del segnale in uscita è:
+$$
+	f_{out} = \frac{f_{clk} \Delta \theta}{2^{B}}
+$$
+
+dove:
+\begin{itemize}
+\item $f_{out}$ è la frequenza del segnale in uscita;
+\item $f_{clk}$ è la frequenza di campionamento del segnale (20.46 MHz);
+\item $\Delta \theta$ è l'incremento di fase (PINC);
+\item B è il numero di bit usati per rappresentare gli spiazzamenti (24 bit).
+\end{itemize}
+
+Quindi l'incremento di fase si calcola applicando la formula:
+$$
+	\Delta \theta = \frac{2^B f_{out}}{f_{clk}} = \frac{2^{24} f_{out}}{20.46 \cdot 10^6}
+$$
+
+mentre per le frequenze di uscita \textbf{negative}:
+$$
+	\Delta \theta = \frac{2^B (f_{clk} + f_{out})}{f_{clk}} = \frac{2^{24} (20.46 \cdot 10^6 + f_{out})}{20.46 \cdot 10^6}
+$$
+
+I risultati sono arrotondati all'intero più vicino.
+
+Per quanto riguarda l'offset di fase (POFF), la formula utilizzata è la seguente:
+$$
+	2 f_{out} p = 2 f_{out} (-0.0005)
+$$
+
+Il valore ottenuto deve essere interpretato come un numero a virgola fissa con segno avente un bit di parte intera (il bit di segno).
+
+In base alle formule precedentemente illustrate si ottengono i seguenti valori:\\
+
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{Frequenza} (Hz) & \textbf{PINC} (Hex) & \textbf{POFF} (Hex)\\ 
+\hline
+-3250								& FFF597					   & 000000						\\
+\hline
+-2625								& FFF797					   & 000000						\\
+\hline
+-2000								& FFF998					   & 000FFF						\\
+\hline
+-1375								& FFFB98					   & FFF000						\\
+\hline
+-750  								& FFFD99					   & 0F0F0F						\\
+\hline
+-125									& FFFF99					   & F0F0F0						\\
+\hline
+500									& 19A						   & FF0000						\\
+\hline
+1125								& 39B						   & 00FF00						\\
+\hline
+1750								& 59B						   & 0000DC						\\
+\hline
+2375								& 79C						   & 003400						\\
+\hline
+3000								& 99C						   & 220000						\\
+\hline
+\end{tabular}
+\end{center}
+\clearpage
 
 \chapter{IPcore 2}
 Le specifiche per questo componente prescrivono la realizzazione di un \textit{IPcore} che calcolasse, dato un un insieme di campioni, il massimo valore. I campioni sono espressi come dei valori complessi, formati da parte reale ed immaginaria, i quali devono essere preventivamente elaborati calcolandone il modulo. Il massimo verrà calcolato sui moduli di questi campioni. Il componente deve fornire in uscita il campione (inteso come valore complesso) massimo, oltre alle informazioni relative a spiazzamento nella frequenza doppler, frequenza doppler e satellite ai quali appartiene il campione.
@@ -128,7 +229,7 @@ Il componente è dotato inoltre di un'unità di controllo alla quale è demandat
 Dalla \figurename~\ref{complexabs_fsm}, si può notare la presenza dello stato ADD. Questo stato non comporta nessuna operazione da parte dell'automa se non quella di attendere un periodo di clock necessario al sommatore per completare l'operazione di somma (il sommatore \textit{ripple\_carry} è implementato come macchina combinatoria non pipelined).
 \clearpage
 \subsection{Calcolo del massimo}
-Il componente realizza l'operazione di calcolo del massimo per un insieme di campioni di dimensione $s*d*c$, dove \textit{s} rappresenta il numero di satelliti da analizzare, \textit{d} il numero di intervalli di frequenze doppler per ciascun satellite e \textit{c} rappresenta il numero di campioni per ciascun intervallo doppler. Il massimo viene calcolato sui moduli dei campioni, a loro volta ottenuti dal blocco \textit{complex\_abs}.\\
+Il componente realizza l'operazione di calcolo del massimo per un insieme di campioni di dimensione $s \cdot d \cdot c$, dove \textit{s} rappresenta il numero di satelliti da analizzare, \textit{d} il numero di intervalli di frequenze doppler per ciascun satellite e \textit{c} rappresenta il numero di campioni per ciascun intervallo doppler. Il massimo viene calcolato sui moduli dei campioni, a loro volta ottenuti dal blocco \textit{complex\_abs}.\\
 Per ottimizzare in risorse e tempo lo sviluppo del componente si è incentrato su di una soluzione di calcolo \textbf{dinamico} del massimo: ovvero, ad ogni iterazione, il massimo viene confrontato con il campione in ingresso e aggiornato direttamente. In questo modo si ha la necessità di salvare solo i dati relativi al massimo con conseguente ottimizzazione delle risorse di memoria.
 
 Il componente restituisce in uscita il valore complesso e il modulo del campione massimo oltre alle sue coordinate nell'insieme di campioni, ovvero l'indice di spiazzamento nella frequenza doppler, la frequenza doppler e il satellite ai quali appartiene.
@@ -142,7 +243,7 @@ Sostanzialmente il funzionamento del componente è stato sintetizzato a due proc
 
 \clearpage
 \subsubsection{Architettura strutturale}
-Essenzialmente l'architettura è caratterizzata da tre \textit{contatori modulo n}, un \textit{comparatore} e cinque \textit{registri}. I contatori servono a realizzare il ciclo di $s*d*c$ iterazioni attraverso una configurazione a cascata. I registri sono necessari per memorizzare le informazioni relative al massimo campione, ovvero il modulo, il valore complesso, lo spiazzamento all'interno della frequenza doppler, l'intervallo doppler e il satellite. Infine il comparatore è necessario per confrontare il campione i-esimo con il massimo. Nella \figurename~\ref{computemax_schema} è possibile osservare come i componenti siano collegati tra loro.
+Essenzialmente l'architettura è caratterizzata da tre \textit{contatori modulo n}, un \textit{comparatore} e cinque \textit{registri}. I contatori servono a realizzare il ciclo di $s \cdot d \cdot c$ iterazioni attraverso una configurazione a cascata. I registri sono necessari per memorizzare le informazioni relative al massimo campione, ovvero il modulo, il valore complesso, lo spiazzamento all'interno della frequenza doppler, l'intervallo doppler e il satellite. Infine il comparatore è necessario per confrontare il campione i-esimo con il massimo. Nella \figurename~\ref{computemax_schema} è possibile osservare come i componenti siano collegati tra loro.
 
 \begin{figure}
 \includegraphics[scale=0.55, keepaspectratio]{immagini/computemax_schemablocchi}
@@ -176,7 +277,7 @@ Come si può osservare dalla \figurename~\ref{wrapperabs_fsm}, ogni qualvolta un
 \clearpage
 \begin{figure}
 \begin{center}
-\includegraphics[scale=0.31, keepaspectratio]{immagini/fsm_wrapper_max}
+\includegraphics[scale=0.28, keepaspectratio]{immagini/fsm_wrapper_max}
 \caption{Protocollo di comunicazione per \textit{compute\_max}}
 \label{wrappermax_fsm}
 \end{center}
@@ -187,14 +288,11 @@ La \figurename~\ref{wrappermax_fsm} mostra l'automa riguardante \textit{compute\
 Per ridurre al minimo le modifiche al codice dei componenti, già testato e funzionante, si è optato di aggiungere le funzionalità di comunicazione attraverso l'utilizzo di \textit{wrapper}. Ogni \textit{wrapper} contiene il relativo componente e l'automa a stati che implementa il protocollo di comunicazione, oltre ad alcuni registri che sono necessari per memorizzare il risultato dell'elaborazione.
 
 L'aggiunta delle funzionalità di comunicazione e dunque della eventualità che il blocco possa fermarsi in attesa di dati validi in ingresso ha portato a delle leggere modifiche all'architettura di \textit{complex\_max}.\\
-Le modiche hanno riguardato la rimozione dei registri usati per ritardare gli ingressi, \textit{reg\_sample\_abs} e \textit{reg\_sample\_max}, poiché il ritardo necessario a mantenere stabili gli ingressi viene fornito direttamente dall'automa nel wrapper. Inoltre, l'ingresso di abilitazione al conteggio per il contatore dei campioni viene passato all'esterno poiché è sempre l'automa del wrapper a determinarne l'incremento quando necessario. Infine, viene aggiunto un altro blocco \textit{livelli2impulsi}, tra il contatore dei campioni e quello delle doppler, proprio perché il contatore dei campioni non è sempre abilitato e quindi potrebbe generare un segnale di \textit{count\_hit} che permane alto fintantoché non viene nuovamente abilitato al conteggio. L'introduzione di quest'ultimo blocco provoca un'ulteriore latenza che deve essere compensata da un ulteriore \textit{flip-flop} per il segnale di caricamento del registro della doppler. La \figurename~\ref{} illustra come cambia l'architettura per il blocco \textit{compute\_max} in seguito alle osservazioni precedenti.
+Le modiche hanno riguardato la rimozione dei registri usati per ritardare gli ingressi, \textit{reg\_sample\_abs} e \textit{reg\_sample\_max}, poiché il ritardo necessario a mantenere stabili gli ingressi viene fornito direttamente dall'automa nel wrapper. Inoltre, l'ingresso di abilitazione al conteggio per il contatore dei campioni viene passato all'esterno poiché è sempre l'automa del wrapper a determinarne l'incremento quando necessario. Infine, viene aggiunto un altro blocco \textit{livelli2impulsi}, tra il contatore dei campioni e quello delle doppler, proprio perché il contatore dei campioni non è sempre abilitato e quindi potrebbe generare un segnale di \textit{count\_hit} che permane alto fintantoché non viene nuovamente abilitato al conteggio. L'introduzione di quest'ultimo blocco provoca un'ulteriore latenza che deve essere compensata da un ulteriore \textit{flip-flop} per il segnale di caricamento del registro della doppler. La \figurename~\ref{computemax_schema2} illustra come cambia l'architettura per il blocco \textit{compute\_max} in seguito alle osservazioni precedenti.
 
 \begin{figure}
 \includegraphics[scale=0.55, keepaspectratio]{immagini/computemax_schemablocchi2}
 \caption{Architettura strutturale (rivista) di \textit{compute\_max}}
-\label{computemax_schema}
+\label{computemax_schema2}
 \end{figure}
-
-\chapter{Driver}
-
 \end{document}
