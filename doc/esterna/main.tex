@@ -139,34 +139,34 @@ In base alle formule precedentemente illustrate si ottengono i seguenti valori:\
 \hline
 \textbf{Frequenza} (Hz) & \textbf{PINC} (Hex) & \textbf{POFF} (Hex)\\ 
 \hline
--3250								& FFF597					   & 000000						\\
+-3250								& FFF597					   & 00000A						\\
 \hline
--2625								& FFF797					   & 000000						\\
+-2625								& FFF797					   & 000005						\\
 \hline
--2000								& FFF998					   & 000FFF						\\
+-2000								& FFF998					   & 000000						\\
 \hline
--1375								& FFFB98					   & FFF000						\\
+-1375								& FFFB98					   & 00000B						\\
 \hline
--750  								& FFFD99					   & 0F0F0F						\\
+-750  								& FFFD99					   & 000006						\\
 \hline
--125									& FFFF99					   & F0F0F0						\\
+-125									& FFFF99					   & 000001						\\
 \hline
-500									& 19A						   & FF0000						\\
+500									& 19A						   & 00000C						\\
 \hline
-1125								& 39B						   & 00FF00						\\
+1125								& 39B						   & 000007						\\
 \hline
-1750								& 59B						   & 0000DC						\\
+1750								& 59B						   & 000002						\\
 \hline
-2375								& 79C						   & 003400						\\
+2375								& 79C						   & 00000D						\\
 \hline
-3000								& 99C						   & 220000						\\
+3000								& 99C						   & 000008						\\
 \hline
 \end{tabular}
 \end{center}
 \clearpage
 
 \chapter{IPcore 2}
-Le specifiche per questo componente prescrivono la realizzazione di un \textit{IPcore} che calcolasse, dato un un insieme di campioni, il massimo valore. I campioni sono espressi come dei valori complessi, formati da parte reale ed immaginaria, i quali devono essere preventivamente elaborati calcolandone il modulo. Il massimo verrà calcolato sui moduli di questi campioni. Il componente deve fornire in uscita il campione (inteso come valore complesso) massimo, oltre alle informazioni relative a spiazzamento nella frequenza doppler, frequenza doppler e satellite ai quali appartiene il campione.
+Le specifiche per questo componente prescrivono la realizzazione di un \textit{IPcore} che calcolasse, dato un un insieme di campioni, il massimo valore. I campioni sono espressi come dei valori complessi, formati da parte reale ed immaginaria, i quali devono essere preventivamente elaborati calcolandone il modulo. Il massimo verrà calcolato sui moduli di questi campioni. Il componente deve fornire in uscita il campione massimo(inteso come valore complesso), oltre alle informazioni relative a spiazzamento nella frequenza doppler, frequenza doppler e satellite ai quali appartiene il campione.
 
 \begin{figure}[hb]
 \begin{center}
@@ -259,9 +259,9 @@ Per un motivo analogo sono stati introdotti dei \textit{flip-flop}, ovvero per r
 Un blocco \textit{livelli2impulsi} è posto tra i contatori delle doppler e dei satelliti per rendere il segnale a livelli \textit{count\_hit} un segnale impulsivo. Questo accorgimento è necessario per evitare che il contatore dei satelliti sia abilitato al conteggio per più di una volta, cosa che potrebbe capitare quando sono terminate le frequenze doppler per un dato satellite (in tal caso il contatore delle doppler avrebbe raggiunto il massimo conteggio e asserirebbe \textit{count\_hit} fino alla prossima abilitazione al conteggio, che avverrebbe solo alla fine della prossima frame).\\
 \clearpage
 \subsection{Collegamento dei blocchi}
-Durante la fase di collegamento dei blocchi appena descritti sono sorti svariati problemi di sincronizzazione derivanti dal fatto che i blocchi avessero tempi di calcolo differenti. 
-
-Una prima soluzione è stata quella di utilizzare frequenze di clock diverse per ciascun blocco, ovvero modellando la frequenza di clock del blocco \textit{compute\_max} con un periodo che tenesse in conto del ritardo del blocco \textit{complex\_abs}, ma questa soluzione è stata abbandonata per la difficoltà di definire in maniera precisa la latenza del primo blocco.
+Durante la fase di collegamento dei blocchi appena descritti sono sorti svariati problemi di sincronizzazione derivanti dal fatto che i blocchi avessero tempi di calcolo differenti.\\
+Una prima soluzione è stata quella di utilizzare frequenze di clock diverse per ciascun blocco, ovvero modellando la frequenza di clock del blocco \textit{compute\_max} con un periodo che tenesse in conto del ritardo del blocco \textit{complex\_abs}, ma questa soluzione è stata abbandonata per motivi di inefficienza.\\
+Infatti, adattando la pipe a lavorare ad una frequenza tale da assicurare sempre il termine del blocco \textit{complex\_abs}, si incorreva nella possibilità di avere il sistema in attesa \textit{"non utile"} per un tempo variante e indeterminato.\\
 
 La soluzione adottata, pertanto, è stata quella di utilizzare una comunicazione basata su \textbf{scambio di messaggi}. In pratica, ciascun blocco gestisce una coppia di segnali: \textit{valid\_out} che indica la \textbf{validità} del dato sulla linea di uscita e \textit{ready\_out} che indica la \textbf{disponibilità} del blocco ad accettare dati in ingresso. Oltre a questi due segnali, ciascun blocco riceve in ingresso un'altra coppia di segnali con una semantica simile: \textit{valid\_in}, che indica la validità del dato in ingresso al blocco (asserito dal blocco a monte) e \textit{ready\_in}, che indica la disponibilità del componente a valle di accettare dati. \\
 Come si può osservare dalla \figurename~\ref{wrapperabs_fsm}, ogni qualvolta un blocco è pronto ad accettare dati in ingresso deve asserire \textit{ready\_out} e attendere che \textit{valid\_in} sia asserito dal blocco a monte. Una volta che \textit{valid\_in} diventa alto, il blocco può procedere all'elaborazione e asserire \textit{valid\_out}, quando l'elaborazione termina, per segnalare la presenza di dati validi sulla linea di uscita. Se il blocco a valle non è pronto ad accettare dati, il blocco dovrà attendere che il segnale \textit{ready\_in} sia alto prima di procedere al calcolo successivo.
