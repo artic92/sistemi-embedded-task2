@@ -103,29 +103,21 @@ architecture STRUCTURE of test_dds_wrapper is
   );
   end component counter_modulo_n;
 
-  --! @brief Flip-flop D con reset 0-attivo asincrono
-  component d_edge_triggered
-  port (
-    data_in  : in  STD_LOGIC;
-    reset_n  : in  STD_LOGIC;
-    clock    : in  STD_LOGIC;
-    data_out : out STD_LOGIC
-  );
-  end component d_edge_triggered;
-
   --! @brief Parte di controllo del blocco
   component fsm_dds_wrapper
   port (
-    clock       : in  STD_LOGIC;
-    reset_n     : in  STD_LOGIC;
-    valid_in    : in  STD_LOGIC;
-    count_hit   : in  STD_LOGIC;
-    reset_n_all : out STD_LOGIC
+    clock        : in  STD_LOGIC;
+    reset_n      : in  STD_LOGIC;
+    valid_in     : in  STD_LOGIC;
+    count_hit    : in  STD_LOGIC;
+    valid_in_out : out STD_LOGIC;
+    reset_n_all  : out STD_LOGIC;
+    done         : out STD_LOGIC
   );
   end component fsm_dds_wrapper;
 
   signal sine_cosine_sig : std_logic_vector(31 downto 0);
-  signal reset_n_all, counter_enable_sig, count_hit_sig, valid_out_sig : std_logic;
+  signal reset_n_all, counter_enable_sig, count_hit_sig, valid_out_sig, valid_in_sig : std_logic;
 
 begin
 
@@ -145,7 +137,7 @@ port map (
   ready_out => ready_out,
   reset_n => reset_n_all,
   sine_cosine(31 downto 0) => sine_cosine_sig(31 downto 0),
-  valid_in => valid_in,
+  valid_in => valid_in_sig,
   valid_out => valid_out_sig
 );
 
@@ -180,16 +172,6 @@ port map (
   count_hit      => count_hit_sig
 );
 
---! @brief Flip-flop necessario a ritardare il segnale di count_hit del contatore
---! @details Il segnale count_hit viene utilizzato anche per indicare la terminazione delle operazioni (done)
-ff_count_hit_delayed : d_edge_triggered
-port map (
-  data_in  => count_hit_sig,
-  reset_n  => reset_n,
-  clock    => clock,
-  data_out => done
-);
-
 --! @brief Automa a stati finiti per la gestione dei segnali di controllo del DDS.
 --! @details Attende la terminazione del conteggio e resetta il DDS_compiler.
 --!   Questo componente è necessario per gestire opportunamente il segnale
@@ -200,7 +182,9 @@ port map (
   reset_n     => reset_n,
   valid_in    => valid_in,
   count_hit   => count_hit_sig,
-  reset_n_all => reset_n_all
+  valid_in_out => valid_in_sig,
+  reset_n_all => reset_n_all,
+  done        => done
 );
 
 end STRUCTURE;

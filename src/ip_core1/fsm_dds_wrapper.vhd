@@ -34,20 +34,22 @@ entity fsm_dds_wrapper is
            reset_n : in STD_LOGIC;
            valid_in : in STD_LOGIC;
            count_hit : in STD_LOGIC;
-           reset_n_all : out STD_LOGIC);
+           valid_in_out : out STD_LOGIC;
+           reset_n_all : out STD_LOGIC;
+           done : out STD_LOGIC);
 end fsm_dds_wrapper;
 
 architecture Behavioral of fsm_dds_wrapper is
 
-type state is (reset_dds_1, reset_dds_2, waiting_for_count_hit);
-signal current_state, next_state : state := reset_dds_1;
+type state is (idle, reset_dds, waiting_for_count_hit, op_done);
+signal current_state, next_state : state := idle;
 
 begin
 
 registro_stato : process(clock, reset_n, next_state)
 begin
 	if(reset_n = '0') then
-		current_state <= reset_dds_1;
+		current_state <= idle;
 	elsif(rising_edge(clock)) then
 		current_state <= next_state;
 	end if;
@@ -57,20 +59,26 @@ fsm_next_state : process(current_state, reset_n, valid_in, count_hit)
 begin
 
   case current_state is
-      when reset_dds_1 =>
-                          if(reset_n = '1' and valid_in = '1')then
-                              next_state <= reset_dds_2;
+      when idle =>
+                          if(valid_in = '1') then
+                              next_state <= reset_dds;
                           else
-                              next_state <= reset_dds_1;
+                              next_state <= idle;
                           end if;
-      when reset_dds_2 =>
+      when reset_dds =>
                           next_state <= waiting_for_count_hit;
       when waiting_for_count_hit =>
-                                    if(count_hit = '1')then
-                                        next_state <= reset_dds_1;
+                                    if(count_hit = '1') then
+                                        next_state <= op_done;
                                     else
                                         next_state <= waiting_for_count_hit;
                                     end if;
+      when op_done =>
+                      if(valid_in = '1') then
+                          next_state <= reset_dds;
+                      else
+                          next_state <= op_done;
+                      end if;
       end case;
 end process;
 
@@ -78,14 +86,20 @@ end process;
 fsm_output : process(current_state)
 begin
 
+ valid_in_out <= '0';
  reset_n_all <= '1';
+ done <= '0';
 
 case current_state is
-   when reset_dds_1 =>
-                      reset_n_all <= '0';
-   when reset_dds_2 =>
+   when idle =>
+                reset_n_all <= '0';
+   when reset_dds =>
+                      valid_in_out <= '1';
                       reset_n_all <= '0';
    when waiting_for_count_hit =>
+   when op_done =>
+                  reset_n_all <= '0';
+                  done <= '1';
    end case;
 end process;
 

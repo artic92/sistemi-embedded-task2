@@ -112,8 +112,7 @@ begin
 
     -- Genero c campioni
     valid_in <= '1';
-    -- Valid_in deve essere alto almeno 2 periodi di clock
-    wait for clock_period*2;
+    wait for clock_period * 2;
     valid_in <= '0';
 
     wait until done = '1';
@@ -123,7 +122,7 @@ begin
 
     -- Genero ALTRI c campioni
     valid_in <= '1';
-    wait for clock_period*2;
+    wait for clock_period * 5;
     valid_in <= '0';
 
     wait until done = '1';
@@ -133,7 +132,7 @@ begin
 
     -- Genero ALTRI c campioni
     valid_in <= '1';
-    wait for clock_period*2;
+    wait for clock_period;
     valid_in <= '0';
 
     wait;
