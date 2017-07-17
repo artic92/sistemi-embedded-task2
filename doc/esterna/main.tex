@@ -98,11 +98,18 @@ L'automa a stati finiti, il cui schema è illustrato in \figurename~\ref{ipcore1
 \end{center}
 \end{figure}
 
+\section{Note sulla Risoluzione}
+Essendo il range di valori di PINC e POFF programmabili sono state effettuate diverse valutazioni per il loro dimensionamento.\\
+Il dds\_compiler allinea la dimensione del canale di configurazione a byte, per questo motivo la scelta possibile ricadeva su 8, 16, 24, 32, 40, o 48 bit.\\
+Scegliendo un dimensionamento su 8 o 16 bit si sarebbe ottenuta una risoluzione in frequenza (rispettivamente 79.921,9 Hz e 312,2 Hz) troppo bassa per le doppler richieste da specifica.\\
+La scelta finale è ricaduta su 24 bit poiché fornisce una risoluzione sufficientemente alta per lo scopo preposto (1,22 Hz).
+
+
 \section{Valori di PINC e POFF}
 Le specifiche richiedevano di calcolare i valori di spiazzamento di fase e frequenza per ottenere 11 particolari frequenze di uscita che appartenessero all'intervallo compreso tra -3250 e 3000 Hz con salti di 625 Hz. \\
 Dal manuale del DDS, la formula per il calcolo della frequenza del segnale in uscita è:
 $$
-	f_{out} = \frac{f_{clk} \Delta \theta}{2^{B}}
+	f_{out} = {\frac{f_{clk}}{2^{B}}} \cdot {\Delta \theta}
 $$
 
 dove:
@@ -110,7 +117,8 @@ dove:
 \item $f_{out}$ è la frequenza del segnale in uscita;
 \item $f_{clk}$ è la frequenza di campionamento del segnale (20.46 MHz);
 \item $\Delta \theta$ è l'incremento di fase (PINC);
-\item B è il numero di bit usati per rappresentare gli spiazzamenti (24 bit).
+\item B è il numero di bit usati per rappresentare gli spiazzamenti (24 bit);
+\item $\frac{f_{clk}}{2^{B}}$ è la risoluzione in frequenza del \textit{DDS\_Compiler}.
 \end{itemize}
 
 Quindi l'incremento di fase si calcola applicando la formula:
@@ -139,27 +147,27 @@ In base alle formule precedentemente illustrate si ottengono i seguenti valori:\
 \hline
 \textbf{Frequenza} (Hz) & \textbf{PINC} (Hex) & \textbf{POFF} (Hex)\\ 
 \hline
--3250								& FFF597					   & 00000A						\\
+-3250								& FFF597					   & A00000						\\
 \hline
--2625								& FFF797					   & 000005						\\
+-2625								& FFF797					   & 500000						\\
 \hline
 -2000								& FFF998					   & 000000						\\
 \hline
--1375								& FFFB98					   & 00000B						\\
+-1375								& FFFB98					   & B00000						\\
 \hline
--750  								& FFFD99					   & 000006						\\
+-750  								& FFFD99					   & 600000						\\
 \hline
--125									& FFFF99					   & 000001						\\
+-125									& FFFF99					   & 100000						\\
 \hline
-500									& 19A						   & 00000C						\\
+500									& 19A						   & C00000						\\
 \hline
-1125								& 39B						   & 000007						\\
+1125								& 39B						   & 700000						\\
 \hline
-1750								& 59B						   & 000002						\\
+1750								& 59B						   & 200000						\\
 \hline
-2375								& 79C						   & 00000D						\\
+2375								& 79C						   & D00000						\\
 \hline
-3000								& 99C						   & 000008						\\
+3000								& 99C						   & 800000						\\
 \hline
 \end{tabular}
 \end{center}
