@@ -79,7 +79,7 @@ architecture Behavioral of tb_ipcore_uniti is
   );
   end component complex_max;
 
-  constant clock_period : time := 10 ns;
+  constant clock_period : time := 200 ns; -- 5 MHz
 
   constant sample_width : natural:= 32;
   constant s : natural:= 2;
@@ -190,7 +190,7 @@ ciclo_satelliti : for i in 0 to s-1 loop
   valid_in <= '0';
 
   wait until done = '1';
-  
+
   --SECONDA DOPPLER
   poff <= x"000000";
   pinc <= x"FFF797";
@@ -200,7 +200,7 @@ ciclo_satelliti : for i in 0 to s-1 loop
   valid_in <= '0';
 
   wait until done = '1';
-  
+
   --TERZA DOPPLER
   poff <= x"000FFF";
   pinc <= x"FFF998";
@@ -241,7 +241,7 @@ ciclo_satelliti : for i in 0 to s-1 loop
   valid_in <= '0';
 
   wait until done = '1';
-  
+
   --SETTIMA DOPPLER
   poff <= x"FF0000";
   pinc <= x"00019A";
@@ -269,29 +269,29 @@ ciclo_satelliti : for i in 0 to s-1 loop
   valid_in <= '1';
   wait for clock_period*2;
   valid_in <= '0';
-  
+
   wait until done = '1';
-  
+
   --DECIMA DOPPLER
   poff <= x"003400";
   pinc <= x"00079C";
-    
+
   valid_in <= '1';
   wait for clock_period*2;
   valid_in <= '0';
-    
+
   wait until done = '1';
-  
+
   --UNDICESIMA DOPPLER
   poff <= x"220000";
   pinc <= x"00099C";
-     
+
   valid_in <= '1';
   wait for clock_period*2;
   valid_in <= '0';
-     
+
   wait until done = '1';
-  
+
 end loop;
   wait until valid_out = '1';
   -- METTERE QUI L'ASSERT PER LA VERIFICA DEL MAX ASSOLUTO
