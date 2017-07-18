@@ -153,7 +153,7 @@ void setup(void)
 
 void loop(void)
 {
-	printf("Generazione campioni per la DOPPLER %u (%i Hz)\n", doppler_count+1, dopplers[doppler_count % DOPPLERS]);
+	printf("Generazione campioni per la DOPPLER %u (%i Hz)\n", (doppler_count+1) % DOPPLERS, dopplers[doppler_count % DOPPLERS]);
 
 	printf("Valore di PINC: 0x%X\n", pinc[doppler_count % DOPPLERS]);
   sgenerator_setPinc(&sig_gen, pinc[doppler_count % DOPPLERS]);
@@ -166,7 +166,8 @@ void loop(void)
 	printf("In attesa che il blocco signal_generator termini...\n");
   while(sgenerator_get_done(&sig_gen) != 1);
 
-	printf("Generazione campioni TERMINATA per la DOPPLER %u\n\n", doppler_count+1);
+	printf("Generazione campioni TERMINATA per la DOPPLER %u\n\n", (doppler_count+1) % DOPPLERS);
 	doppler_count++;
+	sleep(1);
 }
 /** @} */
