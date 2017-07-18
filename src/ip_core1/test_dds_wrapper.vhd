@@ -117,11 +117,12 @@ architecture STRUCTURE of test_dds_wrapper is
   end component fsm_dds_wrapper;
 
   signal sine_cosine_sig : std_logic_vector(31 downto 0);
-  signal reset_n_all, counter_enable_sig, count_hit_sig, valid_out_sig, valid_in_sig : std_logic;
+  signal reset_n_all, counter_enable_sig, count_hit_sig, valid_out_sig, valid_in_sig, load_complex_value_reg : std_logic;
 
 begin
 
 valid_out <= valid_out_sig;
+load_complex_value_reg <= counter_enable_sig and reset_n_all;
 
 -- Il contatore si incrementa solo quando si è sicuri che il blocco a valle abbia
 -- prelevato il dato in uscita. Questa situazione accade quando il blocco DDS ha
@@ -149,8 +150,8 @@ generic map (
 port map (
   I => sine_cosine_sig,
   clock => clock,
-  load => counter_enable_sig,
-  reset_n => reset_n_all,
+  load => load_complex_value_reg,
+  reset_n => reset_n,
   O => sine_cosine
 );
 
