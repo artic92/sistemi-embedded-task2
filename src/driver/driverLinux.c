@@ -39,7 +39,7 @@ void *sgen_base_addr, *absmax_base_addr;
 int doppler_count = 0;
 int dopplers[DOPPLERS] = {-3250, -2625, -2000, -1375, -750, -125, 500, 1125, 1750, 2375, 3000};
 uint32_t pinc[DOPPLERS] = {0x00FFF597, 0x00FFF797, 0x00FFF998, 0x00FFFB98, 0x00FFFD99, 0x00FFFF99, 0x0000019A, 0x0000039B, 0x0000059B, 0x0000079C, 0x0000099C};
-uint32_t poff[DOPPLERS] = {0x00A00000, 0x00500000, 0x00000000, 0x00B00000, 0x00600000, 0x00100000, 0x00C00000, 0x00700000, 0x00200000, 0x00D00000, 0x00800000};
+uint32_t poff[DOPPLERS] = {0x00000000, 0x00000000, 0x00000FFF, 0x00FFF000, 0x000F0F0F, 0x00F0F0F0, 0x00FF0000, 0x0000FF00, 0x000000DC, 0x00003400, 0x00220000};
 
 sgenerator_t sig_gen;
 absmax_t abs_max;
@@ -153,19 +153,19 @@ void setup(void)
 
 void loop(void)
 {
-	printf("Generazione campioni per la DOPPLER %u (%i Hz)\n", doppler_count+1, dopplers[doppler_count]);
+	printf("Generazione campioni per la DOPPLER %u (%i Hz)\n", doppler_count+1, dopplers[doppler_count % DOPPLERS]);
 
-	printf("Valore di PINC: %X\n", pinc[doppler_count]);
-  sgenerator_setPinc(&sig_gen, pinc[doppler_count]);
+	printf("Valore di PINC: 0x%X\n", pinc[doppler_count % DOPPLERS]);
+  sgenerator_setPinc(&sig_gen, pinc[doppler_count % DOPPLERS]);
 
-	printf("Valore di POFF: %X\n", poff[doppler_count]);
-  sgenerator_setPoff(&sig_gen, poff[doppler_count]);
+	printf("Valore di POFF: 0x%X\n", poff[doppler_count % DOPPLERS]);
+  sgenerator_setPoff(&sig_gen, poff[doppler_count % DOPPLERS]);
 
   sgenerator_start(&sig_gen);
 
 	printf("In attesa che il blocco signal_generator termini...\n");
   while(sgenerator_get_done(&sig_gen) != 1);
-	
+
 	printf("Generazione campioni TERMINATA per la DOPPLER %u\n\n", doppler_count+1);
 	doppler_count++;
 }
